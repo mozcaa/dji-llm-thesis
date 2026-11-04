@@ -1,0 +1,458 @@
+:root {
+    --font-sans: "Source Sans 3", sans-serif;
+    --font-display: "Space Grotesk", sans-serif;
+
+    --ui-bg: #f5f5dc;
+    --ui-surface: #fdfcf7;
+    --ui-surface-soft: #eef4ef;
+    --ui-border: #d8e6ef;
+    --ui-shadow: 0 14px 34px rgba(20, 43, 35, 0.12);
+
+    --ui-text: #132432;
+    --ui-muted: #3d5a6b;
+    --ui-accent: #2f7f49;
+    --ui-danger: #b53333;
+
+    --topbar-bg: rgba(11, 30, 43, 0.9);
+    --topbar-border: rgba(255, 255, 255, 0.16);
+
+    --layout-gap: 14px;
+    --sidebar-width: 400px;
+    --radius-lg: 16px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
+    --radius-xs: 8px;
+
+    --control-height: 120px;
+    --control-height-mobile: 104px;
+    --label-font-size: 0.9rem;
+}
+
+/* Base */
+* {
+    box-sizing: border-box;
+}
+
+body.planner-page {
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    font-family: var(--font-sans);
+    color: var(--ui-text);
+    background: radial-gradient(circle at 10% 10%, #ffffff 0%, var(--ui-bg) 40%, #ece8d4 100%);
+}
+
+/* Top Bar */
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding: 14px 20px;
+
+    background: var(--topbar-bg);
+    border-bottom: 1px solid var(--topbar-border);
+    backdrop-filter: blur(4px);
+}
+
+.brand-block h1 {
+    margin: 0;
+    color: #ffffff;
+    font-family: var(--font-display);
+    font-size: 1.22rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.brand-block p {
+    margin: 3px 0 0;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.9rem;
+}
+
+/* Main Layout */
+.layout-shell {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--sidebar-width);
+    gap: var(--layout-gap);
+    padding: var(--layout-gap);
+}
+
+.map-panel,
+.panel-card {
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    box-shadow: var(--ui-shadow);
+}
+
+.map-panel {
+    position: relative;
+    min-height: 0;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+.map-waypoint-marker,
+.map-midpoint-marker {
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    color: #fff;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.42);
+}
+
+.map-waypoint-marker {
+    width: 28px;
+    height: 28px;
+    border: 2px solid #005c75;
+    background: #00c8ff;
+    font-size: 12px;
+}
+
+.map-midpoint-marker {
+    width: 22px;
+    height: 22px;
+    border: 2px solid #7a0062;
+    background: #ff2bd6;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.map-error {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    z-index: 5;
+    max-width: calc(100% - 32px);
+    transform: translateX(-50%);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: #fff;
+    background: rgba(11, 30, 43, 0.92);
+    font-size: 0.9rem;
+}
+
+/* Sidebar */
+#sidebar {
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-right: 2px;
+}
+
+.panel-card {
+    border-radius: var(--radius-md);
+    padding: 12px;
+}
+
+.panel-card h2,
+#globalParameters strong,
+#waypointsList strong {
+    display: block;
+    margin: 0 0 10px;
+
+    color: #1f4c2f;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.panel-card p {
+    margin: 0;
+    color: var(--ui-muted);
+}
+
+#options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+/* Controls */
+button,
+.option-button {
+    cursor: pointer;
+    border: 1px solid #c0d4c7;
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+
+    color: #1f4c2f;
+    font-family: var(--font-sans);
+    font-size: 0.92rem;
+    font-weight: 700;
+
+    background: linear-gradient(180deg, #f8fcf9 0%, #e5efe8 100%);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+button:hover,
+.option-button:hover {
+    transform: translateY(-1px);
+    border-color: #9dc3ab;
+    box-shadow: 0 6px 14px rgba(47, 127, 73, 0.18);
+}
+
+/* Mission Blocks */
+#globalParameters div,
+#waypointsList div,
+div[id^="waypoint-"],
+div[id^="action-"] {
+    border-radius: var(--radius-sm);
+}
+
+div[id^="waypoint-"] {
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #dbe8e0;
+    background: #f9fcfa;
+}
+
+div[id^="waypoint-"] > b {
+    font-size: 0.94rem;
+}
+
+.waypoint-coordinates {
+    border: 1px solid #d5dfd8;
+}
+
+.actions-list {
+    margin-top: 10px;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    background: var(--ui-surface-soft);
+}
+
+.action-item,
+div[id^="action-"] {
+    margin-top: 8px;
+    padding: 8px;
+    border-left: 2px solid #93b5a1;
+    background: #f7fbf8;
+}
+
+.action-items {
+    display: flex;
+    flex-direction: column;
+}
+
+.action-draggable {
+    cursor: move;
+}
+
+.action-sort-placeholder {
+    margin-top: 8px;
+    min-height: 38px;
+    border: 2px dashed #b78cae;
+    border-radius: var(--radius-xs);
+    background: rgba(255, 43, 214, 0.08);
+}
+
+.add-action,
+.remove-action,
+.remove-waypoint {
+    padding-left: 8px;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.add-action {
+    color: var(--ui-accent);
+}
+
+.remove-action,
+.remove-waypoint {
+    color: var(--ui-danger);
+}
+
+.add-action:hover,
+.remove-action:hover,
+.remove-waypoint:hover {
+    text-decoration: underline;
+}
+
+/* Parameter Rows */
+.parameter-input {
+    width: auto;
+    min-width: 96px;
+    padding: 4px 7px;
+
+    border: 1px solid #c9d9ce;
+    border-radius: var(--radius-xs);
+    background: #ffffff;
+
+    color: var(--ui-text);
+    text-align: left;
+    font-family: var(--font-sans);
+}
+
+.parameter-input:focus {
+    outline: 2px solid #b5dbc3;
+    border-color: #8db89c;
+}
+
+#globalParameters .actions-list {
+    padding: 6px 8px;
+}
+
+#globalParameters .actions-list span,
+div[id^="action-"] > div > div > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--label-font-size);
+}
+
+div[id^="action-"] > div > div > span {
+    flex: 1 1 auto;
+}
+
+#globalParameters .parameter-input,
+div[id^="action-"] > div > div > input.parameter-input {
+    width: var(--control-height);
+    min-width: var(--control-height);
+    flex: 0 0 var(--control-height);
+}
+
+div[id^="action-"] > div > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+}
+
+/* Popup Form */
+#popup {
+    display: none;
+    padding: 8px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+
+.form-group label {
+    color: #1f4c2f;
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+select,
+.form-group input {
+    width: 100%;
+    padding: 7px 8px;
+
+    border: 1px solid #c9d9ce;
+    border-radius: var(--radius-xs);
+    background: #ffffff;
+
+    font-family: var(--font-sans);
+    font-size: 0.92rem;
+}
+
+/* jQuery UI Dialog */
+.ui-dialog {
+    overflow: hidden;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 18px 40px rgba(16, 48, 31, 0.26);
+}
+
+.ui-widget.ui-widget-content {
+    border: 1px solid var(--ui-border);
+}
+
+.ui-dialog .ui-dialog-titlebar {
+    border: none;
+    padding: 10px 12px;
+    color: #ffffff;
+    background: var(--topbar-bg);
+}
+
+.ui-dialog .ui-dialog-title {
+    font-family: var(--font-display);
+    font-size: 0.98rem;
+    font-weight: 700;
+}
+
+.ui-dialog .ui-dialog-content {
+    background: var(--ui-surface);
+}
+
+.ui-dialog .ui-dialog-buttonpane {
+    border-top: 1px solid #dce7e0;
+    background: #f3f7f4;
+}
+
+.ui-dialog .ui-dialog-buttonpane button {
+    margin: 0.3em 0.4em;
+}
+
+/* Responsive */
+@media (max-width: 1120px) {
+    .layout-shell {
+        grid-template-columns: 1fr;
+    }
+
+    #map {
+        height: 56vh;
+    }
+
+    #sidebar {
+        padding-right: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .topbar {
+        padding: 12px 14px;
+    }
+
+    .brand-block h1 {
+        font-size: 1.08rem;
+    }
+
+    .brand-block p {
+        font-size: 0.82rem;
+    }
+
+    .layout-shell {
+        gap: 10px;
+        padding: 10px;
+    }
+
+    #options {
+        grid-template-columns: 1fr;
+    }
+
+    #globalParameters .parameter-input,
+    div[id^="action-"] > div > div > input.parameter-input {
+        width: var(--control-height-mobile);
+        min-width: var(--control-height-mobile);
+        flex-basis: var(--control-height-mobile);
+    }
+
+    div[id^="action-"] > div > div > span {
+        white-space: normal;
+    }
+}

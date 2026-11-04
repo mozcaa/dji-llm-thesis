@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mission Planner</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.12.0/dist/maplibre-gl.css">
+</head>
+<body class="planner-page">
+    <!-- Top bar -->
+    <header class="topbar">
+        <div class="brand-block">
+            <h1>Mission Planner</h1>
+            <p>KMZ mission editor and waypoint action builder</p>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="layout-shell">
+        <section class="map-panel">
+            <div id="map"></div>
+        </section>
+
+        <aside id="sidebar">
+            <div class="panel-card">
+                <h2>Mission</h2>
+                <div id="options"></div>
+            </div>
+
+            <div class="panel-card" id="globalParameters">
+                <strong>Parameters</strong>
+                <p>No parameters added yet.</p>
+            </div>
+
+            <div class="panel-card" id="waypointsList">
+                <strong>Waypoints</strong>
+                <p>No waypoints added yet.</p>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Action picker dialog -->
+    <div id="popup" title="Available Actions">
+        <form id="actionForm">
+            <div class="form-group">
+                <label for="actionSelect">Select Action:</label>
+                <select id="actionSelect" onchange="updateParameters()"></select>
+            </div>
+            <div class="form-group" id="parametersContainer"></div>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@5.12.0/dist/maplibre-gl.js"></script>
+    <script src="{{ url_for('map_config') }}"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
