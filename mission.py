@@ -1,12 +1,10 @@
 
 from typing import List
 from geopy.distance import geodesic
+import math
 
 
-# Azioni che possono essere associate ai waypoint.
-# Per ogni tipo di azione sono elencati i parametri richiesti.
-# Questo dizionario viene utilizzato anche dal server per comunicare
-# al frontend quali azioni è possibile aggiungere.
+# Azioni disponibili e relativi parametri, condivisi con il frontend tramite il server.
 ACTIONS = {
     "takePhoto": {
         "parameters": ["payloadPositionIndex", "fileSuffix"]
@@ -30,21 +28,15 @@ ACTIONS = {
 }
 
 
-# Rappresenta una singola azione da eseguire in un waypoint.
+# Rappresenta una singola azione associata a un waypoint.
 class Action:
     def __init__(self, action_type: str, **kwargs):
-        # L'ID viene assegnato successivamente dalla missione.
-        self.action_id = None
+        self.action_id = None                  # L'ID viene assegnato dalla missione.
         self.action_type = action_type
+        self.parameters = kwargs               # Es.: hoverTime=2 diventa {"hoverTime": 2}.
 
-        # kwargs raccoglie i parametri dell'azione in un dizionario.
-        # Ad esempio: Action("hover", hoverTime=5)
-        # produce parameters = {"hoverTime": 5}.
-        self.parameters = kwargs
-
+    # Converte l'azione in un dizionario da usare nel JSON della missione.
     def to_dict(self):
-        # Converte l'azione in un dizionario, utile per la
-        # serializzazione JSON e la comunicazione con il frontend.
         return {
             'action_id': self.action_id,
             'action_type': self.action_type,
@@ -52,173 +44,152 @@ class Action:
         }
 
 
-# Rappresenta un punto della missione, identificato dalle sue coordinate.
-# Ogni waypoint può contenere più azioni, eseguite nell'ordine della lista.
+# Rappresenta un waypoint e le azioni da eseguire al suo raggiungimento.
+# La velocità del waypoint vale per il tratto verso quello successivo.
 class Waypoint:
-    def __init__(self, lat: float, lon: float):
+    def __init__(self, lat: float, lon: float, speed: float = 5.0, quote: float = 10.0):
         self.waypoint_id = None
         self.lat = lat
         self.lon = lon
+        self.speed = speed
+        self.quote = quote
+        self.actions: List[Action] = []        # Le azioni vengono mantenute in ordine.
 
-        # Lista delle azioni associate al waypoint.
-        # List[Action] indica che gli elementi previsti sono oggetti Action.
-        self.actions: List[Action] = []
-
+    # Modifica le coordinate del waypoint.
     def update_waypoint_coordinates(self, lat, lon):
-        # Aggiorna le coordinate del waypoint esistente.
         self.lat = lat
         self.lon = lon
 
-    def update_waypoint_action(self, action_id, action_type, parameter):
-        # Modifica un parametro di un'azione già presente.
-        # action_id viene usato come indice nella lista delle azioni.
-        # action_type qui rappresenta la chiave del parametro da modificare,
-        # non il tipo dell'azione (il nome è un po' fuorviante).
-        self.actions[action_id].parameters[action_type] = parameter
+    # Modifica la velocità sul tratto che parte da questo waypoint.
+    def update_waypoint_speed(self, speed):
+        self.speed = speed
 
+    # Modifica la quota del waypoint.
+    def update_waypoint_quote(self, quote):
+        self.quote = quote
+
+    # Aggiorna un parametro di un'azione esistente.
+    def update_waypoint_action(self, action_id, action_type, parameter):
+        self.actions[action_id].parameters[action_type] = parameter  # action_type è la chiave del parametro.
+
+    # Aggiunge un'azione alla fine della lista.
     def add_action(self, action: Action):
-        # Aggiunge l'azione in fondo alla lista.
         self.actions.append(action)
 
+    # Rimuove l'azione indicata dalla sua posizione nella lista.
     def remove_action(self, action_id: int, mission):
-        # Recupera l'azione dalla sua posizione e la rimuove.
-        # Il parametro mission è presente nella firma, ma non viene usato.
         action = self.actions[action_id]
         self.actions.remove(action)
 
+    # Converte il waypoint, comprese le sue azioni, in un dizionario.
     def to_dict(self):
-        # Serializza il waypoint, comprese tutte le sue azioni.
-        # La list comprehension richiama to_dict() su ogni oggetto Action.
         return {
             'waypoint_id': self.waypoint_id,
             'lat': self.lat,
             'lon': self.lon,
+            'speed': self.speed,
+            'quote': self.quote,
             'actions': [action.to_dict() for action in self.actions]
         }
 
 
-# Contiene i parametri generali della missione e la lista dei waypoint.
-# Attualmente altezza e velocità sono globali: in seguito verranno
-# introdotte quote per waypoint e velocità per tratto.
+# Contiene il payload e i waypoint ordinati della missione.
 class Mission:
-    def __init__(self, height: float, speed: float, payload_index: int):
-        self.height = height
-        self.speed = speed
+    def __init__(self, payload_index: int):
         self.payload_index = payload_index
-
-        # I waypoint vengono mantenuti nell'ordine di percorrenza.
         self.waypoints: List[Waypoint] = []
 
+    # Somma le distanze orizzontali tra waypoint consecutivi, in metri.
     def total_distance(self) -> float:
-        # Calcola la lunghezza totale del percorso in metri.
-        # Non considera le variazioni di quota, ma solo le coordinate
-        # geografiche dei waypoint consecutivi.
-
-        # Con meno di due waypoint non esiste un tratto da percorrere.
         if len(self.waypoints) < 2:
             return 0.0
 
         total = 0.0
+        for i in range(len(self.waypoints) - 1):
+            wp1 = (self.waypoints[i].lat, self.waypoints[i].lon)
+            wp2 = (self.waypoints[i + 1].lat, self.waypoints[i + 1].lon)
+            total += geodesic(wp1, wp2).meters  # Distanza geografica, senza differenza di quota.
 
-        # Si ferma al penultimo waypoint per poter accedere a i+1.
+        return round(total, 2)
+
+    # Stima il tempo di volo sommando i tempi dei singoli tratti tridimensionali.
+    def total_time(self) -> float:
+        total = 0.0
+
         for i in range(len(self.waypoints) - 1):
             wp1 = (self.waypoints[i].lat, self.waypoints[i].lon)
             wp2 = (self.waypoints[i + 1].lat, self.waypoints[i + 1].lon)
 
-            # geodesic calcola la distanza tra due coordinate geografiche.
-            # .meters restituisce il risultato espresso in metri.
-            total += geodesic(wp1, wp2).meters
+            distanceX = geodesic(wp1, wp2).meters                       # Distanza orizzontale in metri.
+            distanceY = abs(self.waypoints[i].quote - self.waypoints[i + 1].quote)  # Differenza di quota in metri.
+            distance = math.sqrt(distanceX**2 + distanceY**2)          # Lunghezza del tratto nello spazio.
 
-        # Arrotonda la distanza totale a due cifre decimali.
+            speed = self.waypoints[i].speed                             # Velocità del waypoint di partenza.
+
+            if speed <= 0:
+                raise ValueError("La velocità del tratto deve essere positiva")
+
+            total += distance / speed
+
         return round(total, 2)
 
-    def total_time(self) -> float:
-        # Stima la durata in secondi usando distanza / velocità.
-        # Attualmente assume una velocità costante e non considera
-        # le attese o i tempi necessari per eseguire le azioni.
-        # Attenzione: con speed = 0 si verifica una divisione per zero.
-        return round(self.total_distance() / self.speed, 2)
-
+    # Inserisce un waypoint nella posizione indicata.
     def add_waypoint_at(self, waypoint: Waypoint, index):
-        # Inserisce un waypoint in una posizione specifica della lista.
-        # I waypoint successivi vengono spostati in avanti.
         self.waypoints.insert(index, waypoint)
-
-        # Riassegna gli ID in base al nuovo ordine.
         self.update_ids()
 
+    # Aggiunge un waypoint alla fine del percorso.
     def add_waypoint(self, waypoint: Waypoint):
-        # Aggiunge il waypoint alla fine della missione.
         self.waypoints.append(waypoint)
         self.update_ids()
 
+    # Elimina un waypoint e aggiorna gli identificativi.
     def remove_waypoint(self, waypoint_id: int):
-        # Recupera il waypoint usando il suo ID come indice.
         waypoint = self.waypoints[waypoint_id]
         self.waypoints.remove(waypoint)
-
-        # Aggiorna gli ID per evitare buchi nella numerazione.
         self.update_ids()
 
+    # Aggiunge un'azione al waypoint indicato.
     def add_action(self, waypoint_id: int, action: Action):
-        # Recupera il waypoint e aggiunge l'azione alla sua lista.
         waypoint = self.waypoints[waypoint_id]
         waypoint.actions.append(action)
-
-        # Aggiorna gli identificativi delle azioni.
         self.update_ids()
 
+    # Cerca un'azione tramite ID, la rimuove e aggiorna la numerazione.
     def remove_action(self, waypoint_id: int, action_id: int):
         waypoint = self.waypoints[waypoint_id]
         action_del = None
 
-        # Cerca l'azione confrontando il suo ID con quello richiesto.
         for i, action in enumerate(waypoint.actions):
             if action.action_id == action_id:
                 action_del = action
                 break
 
-        # Rimuove l'azione trovata e aggiorna la numerazione.
-        # Se non viene trovata, remove(None) genera un errore.
         waypoint.actions.remove(action_del)
         self.update_ids()
 
+    # Riordina le azioni del waypoint secondo la sequenza di ID ricevuta.
     def reorder_actions(self, waypoint_id: int, ordered_action_ids: List[int]) -> bool:
-        # Riordina le azioni di un waypoint secondo la lista di ID ricevuta.
-        # Restituisce False se gli ID forniti non corrispondono
-        # esattamente alle azioni presenti.
-
         waypoint = self.waypoints[waypoint_id]
 
-        # Il nuovo ordine deve contenere lo stesso numero di azioni.
         if len(ordered_action_ids) != len(waypoint.actions):
             return False
 
-        # Dizionario che associa ogni ID al rispettivo oggetto Action.
-        # Serve a ricostruire la lista nel nuovo ordine.
-        action_by_id = {action.action_id: action for action in waypoint.actions}
+        action_by_id = {action.action_id: action for action in waypoint.actions}  # Associa ogni ID al relativo oggetto.
 
-        # Controlla che non siano stati aggiunti o omessi ID.
         if set(action_by_id.keys()) != set(ordered_action_ids):
             return False
 
-        # Ricostruisce la lista seguendo l'ordine degli ID ricevuti.
         waypoint.actions = [action_by_id[action_id] for action_id in ordered_action_ids]
-
-        # Gli ID vengono poi riassegnati secondo le nuove posizioni.
         self.update_ids()
         return True
 
+    # Riassegna gli ID dei waypoint e, per ciascuno, quelli delle azioni.
     def update_ids(self):
-        # Riassegna gli identificativi di waypoint e azioni.
-        # I waypoint sono numerati progressivamente da 0.
-        # Anche le azioni partono da 0, separatamente per ogni waypoint.
-
         waypoint_id = 0
 
         for i, wp in enumerate(self.waypoints):
-            action_id = 0
-
+            action_id = 0            # Ogni waypoint riparte dall'azione 0.
             wp.waypoint_id = waypoint_id
             waypoint_id += 1
 
@@ -226,114 +197,77 @@ class Mission:
                 action.action_id = action_id
                 action_id += 1
 
-        # Gli indici i e j restituiti da enumerate() non vengono usati.
-
+    # Converte la missione e tutti i suoi waypoint in un dizionario.
     def to_dict(self):
-        # Converte la missione in un dizionario Python.
-        # Ogni waypoint viene convertito richiamando il suo to_dict(),
-        # che a sua volta serializza anche le azioni.
-        # payloadIndex usa il nome previsto dal formato JSON del frontend.
         return {
-            'height': self.height,
-            'speed': self.speed,
             'payloadIndex': self.payload_index,
             'waypoints': [waypoint.to_dict() for waypoint in self.waypoints]
         }
 
 
+# Stampa la missione in console, comprese quote, velocità e azioni.
 def print_mission(mission: Mission):
-    # Stampa in console i dati della missione.
-    # Utile per il debug, senza modificare gli oggetti.
-
     print("-------------------------------")
-    print(f"Mission Details:")
-    print(f"  height: {mission.height}")
-    print(f"  speed: {mission.speed}")
+    print("Mission Details:")
     print(f"  payload index: {mission.payload_index}")
-    print(f"  waypoints:")
+    print("  waypoints:")
 
-    # Scorre i waypoint nell'ordine della missione.
     for waypoint in mission.waypoints:
-        print(f"    {waypoint.waypoint_id}: latitude: {waypoint.lat}, longitude: {waypoint.lon}")
+        print(f"{waypoint.waypoint_id}: latitude: {waypoint.lat}, longitude: {waypoint.lon}, "
+              f"quote: {waypoint.quote}, speed: {waypoint.speed}")
 
-        # Le azioni vengono stampate soltanto se presenti.
         if waypoint.actions:
-            print(f"    actions:")
+            print("    actions:")
             for action in waypoint.actions:
-                print(f"      {action.action_id}: {action.action_type}")
+                print(f"{action.action_id}: {action.action_type}")
 
-                # Stampa i parametri specifici dell'azione.
                 for param, value in action.parameters.items():
-                    print(f"        {param}: {value}")
+                    print(f"{param}: {value}")
 
 
+# Crea una missione vuota, senza waypoint.
 def create_empty_mission():
-    # Crea una missione senza waypoint e con parametri iniziali a zero.
-    # La velocità dovrà essere impostata prima di calcolare total_time().
-    return Mission(height=0, speed=0, payload_index=0)
+    return Mission(payload_index=0)
 
 
+# Ricostruisce la missione da un dizionario, per esempio dopo Undo o caricamento JSON.
 def mission_from_dict(data):
-    # Ricostruisce un oggetto Mission a partire da un dizionario.
-    # È l'operazione inversa di to_dict() per i campi gestiti dal modello.
-    # Sarà utile anche per convertire il JSON generato dall'LLM.
-
-    # get() restituisce il valore della chiave, oppure quello predefinito.
-    # float() e int() convertono i dati nei tipi richiesti.
-    height = float(data.get('height', 0))
-    speed = float(data.get('speed', 0))
-
-    # Accetta sia payloadIndex sia payload_index.
     payload_index = int(data.get('payloadIndex', data.get('payload_index', 0)))
+    mission = Mission(payload_index=payload_index)
 
-    # Crea inizialmente una missione senza waypoint.
-    mission = Mission(height=height, speed=speed, payload_index=payload_index)
+    default_speed = float(data.get('speed', 5.0))     # Compatibilità con il vecchio JSON a parametri globali.
+    default_quote = float(data.get('height', 10.0))   # Usati se il waypoint non specifica valori propri.
 
-    # Se la chiave waypoints manca, viene utilizzata una lista vuota.
     for waypoint_data in data.get('waypoints', []):
         lat = float(waypoint_data.get('lat'))
         lon = float(waypoint_data.get('lon'))
+        speed = float(waypoint_data.get('speed', default_speed))
+        quote = float(waypoint_data.get('quote', default_quote))
 
-        # Crea il waypoint con le coordinate recuperate dal dizionario.
-        waypoint = Waypoint(lat=lat, lon=lon)
+        waypoint = Waypoint(lat=lat, lon=lon, speed=speed, quote=quote)
 
-        # Ricostruisce le azioni eventualmente associate al waypoint.
         for action_data in waypoint_data.get('actions', []):
             action_type = action_data.get('action_type')
             parameters = action_data.get('parameters', {})
+            waypoint.add_action(Action(action_type, **parameters))  # ** espande il dizionario nei parametri dell'azione.
 
-            # ** espande il dizionario in argomenti con nome.
-            # Ad esempio {"hoverTime": 5} diventa hoverTime=5.
-            waypoint.add_action(Action(action_type, **parameters))
-
-        # Inserisce il waypoint, completo delle sue azioni, nella missione.
         mission.add_waypoint(waypoint)
 
-    # Assicura che gli identificativi siano coerenti con l'ordine corrente.
-    # add_waypoint() li aggiorna già, ma questa chiamata finale li riassegna.
     mission.update_ids()
     return mission
 
 
+# Crea una missione di esempio con quattro waypoint e alcune azioni.
 def create_mock_mission():
-    # Crea una missione di esempio con quattro waypoint.
-    # Utile per provare il planner e le funzioni di import/export KMZ
-    # senza dover inserire manualmente ogni waypoint e azione.
+    mission = Mission(payload_index=0)
 
-    mission = Mission(height=10.0, speed=5.0, payload_index=0)
-
-    # Primo waypoint: due rotazioni attorno all'asse verticale,
-    # separate da un'attesa di 2 secondi.
-    wp0 = Waypoint(lat=43.06229630922861, lon=12.549784090599045)
+    wp0 = Waypoint(lat=43.06229630922861, lon=12.549784090599045, speed=5.0, quote=10.0)
     wp0.add_action(Action("rotateYaw", aircraftHeading=-90))
     wp0.add_action(Action("hover", hoverTime=2))
     wp0.add_action(Action("rotateYaw", aircraftHeading=90))
-
     mission.add_waypoint(wp0)
 
-    # Secondo waypoint: orientamento del gimbal, messa a fuoco,
-    # zoom e scatto di una fotografia.
-    wp1 = Waypoint(lat=43.063526959224724, lon=12.549784090599045)
+    wp1 = Waypoint(lat=43.063526959224724, lon=12.549784090599045, speed=5.0, quote=10.0)
     wp1.add_action(Action("gimbalRotate", gimbalRotateMode="absoluteAngle",
                           gimbalPitchRotateEnable=1, gimbalPitchRotateAngle=-20,
                           gimbalYawRotateEnable=1, gimbalYawRotateAngle=45,
@@ -343,16 +277,13 @@ def create_mock_mission():
     wp1.add_action(Action("takePhoto", fileSuffix="azz", payloadPositionIndex=0))
     mission.add_waypoint(wp1)
 
-    # Terzo waypoint: altra sequenza di rotazioni e attesa.
-    wp2 = Waypoint(lat=43.063526959224724, lon=12.551495339950547)
+    wp2 = Waypoint(lat=43.063526959224724, lon=12.551495339950547, speed=5.0, quote=10.0)
     wp2.add_action(Action("rotateYaw", aircraftHeading=-45))
     wp2.add_action(Action("hover", hoverTime=2))
     wp2.add_action(Action("rotateYaw", aircraftHeading=45))
     mission.add_waypoint(wp2)
 
-    # Quarto waypoint: nuova configurazione del gimbal,
-    # messa a fuoco, zoom e fotografia.
-    wp3 = Waypoint(lat=43.062241438908295, lon=12.551495339950547)
+    wp3 = Waypoint(lat=43.062241438908295, lon=12.551495339950547, speed=5.0, quote=10.0)
     wp3.add_action(Action("gimbalRotate", gimbalRotateMode="absoluteAngle",
                           gimbalPitchRotateEnable=1, gimbalPitchRotateAngle=20,
                           gimbalYawRotateEnable=1, gimbalYawRotateAngle=-45,

@@ -114,10 +114,10 @@ function refreshMission() {
 // Map & Rendering
 // =========================
 function renderMissionToMap(data) {
-    const globalParametersEl = byId('globalParameters');
-    const waypointsListEl = byId('waypointsList');
+    const globalParametersEl = byId('globalParameters');//da togliere
+    const waypointsListEl = byId('waypointsList'); 
 
-    globalParametersEl.innerHTML = '<strong>Parameters</strong>';
+    globalParametersEl.innerHTML = '<strong>Parameters</strong>'; //da togliere
     waypointsListEl.innerHTML = '<strong>Waypoints</strong>';
 
     Object.entries(data).forEach(([key, value]) => {
@@ -142,7 +142,7 @@ function renderMissionToMap(data) {
         input.value = value;
         input.classList.add('parameter-input');
 
-        markInputDirtyAndCommit(input, (newValue) => {
+        markInputDirtyAndCommit(input, (newValue) => { //toglierer
             updateGlobalParameter(key, newValue);
         });
 
@@ -307,7 +307,7 @@ function handleUndoRedoShortcuts(event) {
         redoMission();
     }
 }
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Commento notabile mentre scrollo
 function addWaypointToSidebar(waypoint) {
     const waypointsListEl = byId('waypointsList');
 
@@ -315,14 +315,14 @@ function addWaypointToSidebar(waypoint) {
     waypointElement.id = `waypoint-${waypoint.waypoint_id}`;
 
     const latFixed = waypoint.lat.toFixed(6);
-    const lonFixed = waypoint.lon.toFixed(6);
-    waypointElement.innerHTML = `<b>${waypoint.waypoint_id}: (${latFixed}, ${lonFixed})</b> <b><a href="#" class="remove-waypoint">del</a></b>`;
+    const lonFixed = waypoint.lon.toFixed(6); 
+    waypointElement.innerHTML = `<b>${waypoint.waypoint_id}: (${latFixed}, ${lonFixed})</b> <b><a href="#" class="remove-waypoint">del</a></b>`; //Aggiunegere il bottone anche per speed e quote
 
     waypointElement.querySelector('.remove-waypoint').addEventListener('click', (event) => {
         event.stopPropagation();
         removeWaypoint(waypoint.waypoint_id);
     });
-
+ //aggiungere il markInputDirtyAndCommit qui che richiama la funzione di aggiornamento quota e v
     const actionsList = document.createElement('div');
     actionsList.classList.add('actions-list');
     actionsList.innerHTML = '<u><b>Actions</b></u> <b><a href="#" class="add-action">add</a></b>';
@@ -571,7 +571,7 @@ function redoMission() {
 }
 
 function addWaypoint(latLng) {
-    const payload = { lat: latLng.lat, lon: latLng.lng };
+    const payload = { lat: latLng.lat, lon: latLng.lng }; //aggiungere i 2 parametri
 
     postJson('/add_waypoint', payload)
         .then((response) => ensureOk(response, 'Failed to add waypoint on server.'))
@@ -586,7 +586,7 @@ function addWaypoint(latLng) {
 }
 
 function addWaypointAt(latLng, index) {
-    const payload = { lat: latLng.lat, lon: latLng.lng, index };
+    const payload = { lat: latLng.lat, lon: latLng.lng, index };//aggiungere i 2 parametri
 
     postJson('/add_waypoint_at', payload)
         .then((response) => ensureOk(response, 'Failed to add waypoint on server.'))
@@ -617,7 +617,43 @@ function updateWaypoint(waypoint) {
         });
 }
 
-function updateGlobalParameter(variable, value) {
+/*
+function updateSpeed(waypoint) {
+    postJson('/update_waypoint_speed', {
+        waypoint_id: waypoint.waypoint_id,
+        speed: waypoint.speed
+    })
+        .then((response) => ensureOk(response, 'Failed to update waypoint on server.'))
+        .then((response) => response.json())
+        .then((data) => {
+            console.log('Waypoint updated on server:', data);
+            refreshMission();
+        })
+        .catch((error) => {
+            console.error('Error updating waypoint on server:', error);
+        });
+}
+
+/*
+function updateQuote(waypoint) {
+    postJson('/update_waypoint_quote', {
+        waypoint_id: waypoint.waypoint_id,
+        quote: waypoint.quote
+    })
+        .then((response) => ensureOk(response, 'Failed to update waypoint on server.'))
+        .then((response) => response.json())
+        .then((data) => {
+            console.log('Waypoint updated on server:', data);
+            refreshMission();
+        })
+        .catch((error) => {
+            console.error('Error updating waypoint on server:', error);
+        });
+}
+
+
+*/
+function updateGlobalParameter(variable, value) { //tutta da togliere
     postJson('/update_global_parameter', { variable, value })
         .then((response) => ensureOk(response, 'Failed to update global parameter on server.'))
         .then((response) => response.json())
