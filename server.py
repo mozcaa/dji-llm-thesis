@@ -184,6 +184,29 @@ def update_waypoint_quote():
     return jsonify({"status": "success", "message": "Waypoint quote updated successfully"}), 200
 
 
+# Aggiorna il payloadIndex, unico parametro globale della missione.
+@app.route('/update_global_parameter', methods=['POST'])
+def update_global_parameter():
+    data = request.get_json()
+    
+    if data.get('variable') != 'payloadIndex':
+        return jsonify({"status": "error", "message": "Unsupported parameter"}), 400
+
+    try:
+        value = int(data.get('value'))
+        if value < 0:
+            return jsonify({"status": "error", "message": "Invalid payload index"}), 400
+    except (ValueError, TypeError):
+        return jsonify({"status": "error", "message": "Invalid payload index"}), 400
+
+    _record_undo_state()  # Salva lo stato precedente per Undo/Redo.
+    mission.payload_index = value  # Modifica il parametro globale della missione.
+
+    print(f"Updating global payload index to: {value}")
+    print_mission(mission)
+    return jsonify({"status": "success", "message": "Payload index updated successfully"}), 200
+
+
 # Modifica un parametro di un'azione presente in un waypoint.
 @app.route('/update_action', methods=['POST'])
 def update_action():

@@ -114,10 +114,10 @@ function refreshMission() {
 // Map & Rendering
 // =========================
 function renderMissionToMap(data) {
-    const globalParametersEl = byId('globalParameters');//da togliere
+    const globalParametersEl = byId('globalParameters');
     const waypointsListEl = byId('waypointsList'); 
 
-    globalParametersEl.innerHTML = '<strong>Parameters</strong>'; //da togliere
+    globalParametersEl.innerHTML = '<strong>Parameters</strong>'; 
     waypointsListEl.innerHTML = '<strong>Waypoints</strong>';
 
     Object.entries(data).forEach(([key, value]) => {
@@ -142,7 +142,7 @@ function renderMissionToMap(data) {
         input.value = value;
         input.classList.add('parameter-input');
 
-        markInputDirtyAndCommit(input, (newValue) => { //toglierer
+        markInputDirtyAndCommit(input, (newValue) => { 
             updateGlobalParameter(key, newValue);
         });
 
@@ -316,13 +316,27 @@ function addWaypointToSidebar(waypoint) {
 
     const latFixed = waypoint.lat.toFixed(6);
     const lonFixed = waypoint.lon.toFixed(6); 
-    waypointElement.innerHTML = `<b>${waypoint.waypoint_id}: (${latFixed}, ${lonFixed})</b> <b><a href="#" class="remove-waypoint">del</a></b>`; //Aggiunegere il bottone anche per speed e quote
 
+    waypointElement.innerHTML = `<b>${waypoint.waypoint_id}: (${latFixed}, ${lonFixed})</b> <b><a href="#" class="remove-waypoint">del</a></b>
+                                 <label>Speed: <input type="number" step="any" class="waypoint-speed" value="${waypoint.speed}"></label>
+                                 <label>Quote: <input type="number" step="any" class="waypoint-quote" value="${waypoint.quote}"></label>  `; 
     waypointElement.querySelector('.remove-waypoint').addEventListener('click', (event) => {
         event.stopPropagation();
         removeWaypoint(waypoint.waypoint_id);
     });
- //aggiungere il markInputDirtyAndCommit qui che richiama la funzione di aggiornamento quota e v
+
+   const inputspeed= waypointElement.querySelector('.waypoint-speed');
+   const inputquote= waypointElement.querySelector('.waypoint-quote'); 
+        
+   markInputDirtyAndCommit(inputspeed, (newValue) => { 
+            updateSpeed(waypoint, newValue);
+        });
+
+       markInputDirtyAndCommit(inputquote, (newValue) => { 
+            updateQuote(waypoint, newValue);
+        });
+
+
     const actionsList = document.createElement('div');
     actionsList.classList.add('actions-list');
     actionsList.innerHTML = '<u><b>Actions</b></u> <b><a href="#" class="add-action">add</a></b>';
@@ -571,7 +585,7 @@ function redoMission() {
 }
 
 function addWaypoint(latLng) {
-    const payload = { lat: latLng.lat, lon: latLng.lng }; //aggiungere i 2 parametri
+    const payload = { lat: latLng.lat, lon: latLng.lng }; 
 
     postJson('/add_waypoint', payload)
         .then((response) => ensureOk(response, 'Failed to add waypoint on server.'))
@@ -586,7 +600,7 @@ function addWaypoint(latLng) {
 }
 
 function addWaypointAt(latLng, index) {
-    const payload = { lat: latLng.lat, lon: latLng.lng, index };//aggiungere i 2 parametri
+    const payload = { lat: latLng.lat, lon: latLng.lng, index };
 
     postJson('/add_waypoint_at', payload)
         .then((response) => ensureOk(response, 'Failed to add waypoint on server.'))
@@ -617,11 +631,19 @@ function updateWaypoint(waypoint) {
         });
 }
 
-/*
-function updateSpeed(waypoint) {
-    postJson('/update_waypoint_speed', {
+
+
+function updateSpeed(waypoint, newspeed) {
+    const speed = Number(newspeed);  // Converte il valore ricevuto in numero.
+
+    if (newspeed.trim() === '' || !Number.isFinite(speed) || speed <= 0) {
+        refreshMission();
+        return;
+    }
+
+    postJson('/update_waypoint/speed', {
         waypoint_id: waypoint.waypoint_id,
-        speed: waypoint.speed
+        speed: speed
     })
         .then((response) => ensureOk(response, 'Failed to update waypoint on server.'))
         .then((response) => response.json())
@@ -631,14 +653,22 @@ function updateSpeed(waypoint) {
         })
         .catch((error) => {
             console.error('Error updating waypoint on server:', error);
+            refreshMission();
         });
 }
 
-/*
-function updateQuote(waypoint) {
-    postJson('/update_waypoint_quote', {
+
+function updateQuote(waypoint, newquote) {
+    const quote = Number(newquote);  // Converte il valore ricevuto in numero.
+
+    if (newquote.trim() === '' || !Number.isFinite(quote)) {
+        refreshMission();
+        return;
+    }
+
+    postJson('/update_waypoint/quote', {
         waypoint_id: waypoint.waypoint_id,
-        quote: waypoint.quote
+        quote: quote
     })
         .then((response) => ensureOk(response, 'Failed to update waypoint on server.'))
         .then((response) => response.json())
@@ -648,12 +678,13 @@ function updateQuote(waypoint) {
         })
         .catch((error) => {
             console.error('Error updating waypoint on server:', error);
+            refreshMission();
         });
 }
 
 
-*/
-function updateGlobalParameter(variable, value) { //tutta da togliere
+
+function updateGlobalParameter(variable, value) { 
     postJson('/update_global_parameter', { variable, value })
         .then((response) => ensureOk(response, 'Failed to update global parameter on server.'))
         .then((response) => response.json())

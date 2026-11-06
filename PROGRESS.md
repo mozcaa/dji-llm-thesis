@@ -6,13 +6,18 @@
 - Analizzato (`server.py`).
 - Prima analisi (`script.js`).
 - Commentato i 3 file .py
+
 - Modificato missione.py in modo da avere quota e velocità non globali, aggiornato il tempo totale considerando anche la distanza verticale e quindi calcolando la distanza totale (assunta v costante). Per la velocità da waypoint a waypoint è stato inserito l' attributo speed ad ogni waypoint, indica la velocità nel tratto che collega il waypoint con quello successivo.
 - Adattato server.py per quota e velocità diverse ad ogni tratto.
 - Adattato parser_xml.py per quota e velocità diverse ad ogni tratto.
 - Appuntate come commenti nel codice le modifiche individuate fino ad ora in script.js per adattarlo a quota e velocità diverse. Alcuni commenti sono ancora provvisori e serviranno come riferimento per il lavoro successivo.
 
+- Modificato script.js per gestire quota e velocità individuali dei waypoint, aggiungendo input e relative chiamate POST.
+- Aggiornato server.py per mantenere payloadIndex globale.
+- Revisionato il frontend e corretti alcuni errori.
+
 ### Next steps
-- Completare le modifiche al frontend JavaScript, aggiungendo alla sidebar i campi per quota e velocità di ciascun waypoint e collegandoli agli endpoint Flask.
+- Completare le modifiche al frontend JavaScript.
 - Commentare il frontend.
 - Valutare un refactoring mirato del frontend per migliorarne leggibilità e organizzazione.
 - Testare il funzionamento complessivo del planner, verificando la creazione e modifica dei waypoint, Undo/Redo e l'esportazione e reimportazione dei KMZ.
