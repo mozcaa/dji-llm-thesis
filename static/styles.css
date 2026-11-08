@@ -1,55 +1,90 @@
+
+/* =========================
+   Variabili globali
+   ========================= */
+
 :root {
+    /* Font utilizzati nell'interfaccia. */
     --font-sans: "Source Sans 3", sans-serif;
     --font-display: "Space Grotesk", sans-serif;
 
+    /* Colori principali di sfondo e dei pannelli. */
     --ui-bg: #f5f5dc;
     --ui-surface: #fdfcf7;
     --ui-surface-soft: #eef4ef;
     --ui-border: #d8e6ef;
+
+    /* Ombra utilizzata per i pannelli. */
     --ui-shadow: 0 14px 34px rgba(20, 43, 35, 0.12);
 
+    /* Colori del testo e dei controlli. */
     --ui-text: #132432;
     --ui-muted: #3d5a6b;
     --ui-accent: #2f7f49;
     --ui-danger: #b53333;
 
+    /* Colori della barra superiore. */
     --topbar-bg: rgba(11, 30, 43, 0.9);
     --topbar-border: rgba(255, 255, 255, 0.16);
 
+    /* Dimensioni generali dell'interfaccia. */
     --layout-gap: 14px;
     --sidebar-width: 400px;
+
+    /* Raggi degli angoli arrotondati. */
     --radius-lg: 16px;
     --radius-md: 14px;
     --radius-sm: 10px;
     --radius-xs: 8px;
 
+    /* Larghezza degli input e dimensione delle etichette. */
     --control-height: 120px;
     --control-height-mobile: 104px;
     --label-font-size: 0.9rem;
 }
 
-/* Base */
+
+/* =========================
+   Base
+   ========================= */
+
+/* Include padding e bordi nelle dimensioni degli elementi. */
 * {
     box-sizing: border-box;
 }
 
+/* Imposta il layout principale della pagina del planner. */
 body.planner-page {
     margin: 0;
     height: 100vh;
     overflow: hidden;
+
+    /* Organizza la barra superiore e il contenuto in verticale. */
     display: flex;
     flex-direction: column;
 
     font-family: var(--font-sans);
     color: var(--ui-text);
-    background: radial-gradient(circle at 10% 10%, #ffffff 0%, var(--ui-bg) 40%, #ece8d4 100%);
+
+    background: radial-gradient(
+        circle at 10% 10%,
+        #ffffff 0%,
+        var(--ui-bg) 40%,
+        #ece8d4 100%
+    );
 }
 
-/* Top Bar */
+
+/* =========================
+   Top Bar
+   ========================= */
+
+/* Barra superiore con nome e descrizione del planner. */
 .topbar {
     position: sticky;
     top: 0;
-    z-index: 20;
+    z-index: 20;  /* Mantiene la barra sopra gli altri elementi. */
+
     padding: 14px 20px;
 
     background: var(--topbar-bg);
@@ -57,6 +92,7 @@ body.planner-page {
     backdrop-filter: blur(4px);
 }
 
+/* Titolo principale del planner. */
 .brand-block h1 {
     margin: 0;
     color: #ffffff;
@@ -66,24 +102,34 @@ body.planner-page {
     letter-spacing: 0.01em;
 }
 
+/* Descrizione sotto il titolo. */
 .brand-block p {
     margin: 3px 0 0;
     color: rgba(255, 255, 255, 0.82);
     font-size: 0.9rem;
 }
 
-/* Main Layout */
+
+/* =========================
+   Main Layout
+   ========================= */
+
+/* Divide la pagina in mappa a sinistra e sidebar a destra. */
 .layout-shell {
     flex: 1;
     min-height: 0;
     overflow: hidden;
 
     display: grid;
+
+    /* La mappa occupa lo spazio disponibile, la sidebar 400px. */
     grid-template-columns: minmax(0, 1fr) var(--sidebar-width);
+
     gap: var(--layout-gap);
     padding: var(--layout-gap);
 }
 
+/* Stile condiviso dai pannelli della mappa e della sidebar. */
 .map-panel,
 .panel-card {
     background: var(--ui-surface);
@@ -91,6 +137,7 @@ body.planner-page {
     box-shadow: var(--ui-shadow);
 }
 
+/* Contenitore grafico della mappa. */
 .map-panel {
     position: relative;
     min-height: 0;
@@ -98,70 +145,101 @@ body.planner-page {
     border-radius: var(--radius-lg);
 }
 
+/* La mappa MapLibre riempie completamente il suo contenitore. */
 #map {
     width: 100%;
     height: 100%;
 }
 
+
+/* =========================
+   Marker della mappa
+   ========================= */
+
+/* Proprietà comuni ai waypoint e ai pulsanti intermedi. */
 .map-waypoint-marker,
 .map-midpoint-marker {
     display: grid;
     place-items: center;
+
     padding: 0;
     border-radius: 50%;
     cursor: pointer;
+
     color: #fff;
     font-family: var(--font-sans);
     font-weight: 700;
+
     box-shadow: 0 2px 7px rgba(0, 0, 0, 0.42);
 }
 
+/* Marker azzurro che identifica un waypoint. */
 .map-waypoint-marker {
     width: 28px;
     height: 28px;
+
     border: 2px solid #005c75;
     background: #00c8ff;
+
     font-size: 12px;
 }
 
+/* Pulsante + che consente di inserire un waypoint tra due punti. */
 .map-midpoint-marker {
     width: 22px;
     height: 22px;
+
     border: 2px solid #7a0062;
     background: #ff2bd6;
+
     font-size: 16px;
     line-height: 1;
 }
 
+/* Messaggio visualizzato quando la mappa non può essere inizializzata. */
 .map-error {
     position: absolute;
     top: 16px;
     left: 50%;
     z-index: 5;
+
     max-width: calc(100% - 32px);
+
+    /* Centra orizzontalmente il messaggio. */
     transform: translateX(-50%);
+
     border-radius: 8px;
     padding: 10px 14px;
+
     color: #fff;
     background: rgba(11, 30, 43, 0.92);
     font-size: 0.9rem;
 }
 
-/* Sidebar */
+
+/* =========================
+   Sidebar
+   ========================= */
+
+/* Contiene i comandi, i parametri globali e i waypoint. */
 #sidebar {
     min-height: 0;
-    overflow-y: auto;
+    overflow-y: auto;  /* Consente lo scorrimento indipendente dalla mappa. */
+
     display: flex;
     flex-direction: column;
     gap: 12px;
+
     padding-right: 2px;
 }
 
+/* Pannelli separati all'interno della sidebar. */
 .panel-card {
     border-radius: var(--radius-md);
     padding: 12px;
 }
 
+/* Titoli dei pannelli e delle sezioni dinamiche. */
 .panel-card h2,
 #globalParameters strong,
 #waypointsList strong {
@@ -174,21 +252,29 @@ body.planner-page {
     font-weight: 700;
 }
 
+/* Testo descrittivo dei pannelli. */
 .panel-card p {
     margin: 0;
     color: var(--ui-muted);
 }
 
+/* Dispone Save, Load, Undo e Redo su due colonne. */
 #options {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
 }
 
-/* Controls */
+
+/* =========================
+   Buttons & Controls
+   ========================= */
+
+/* Aspetto generale dei pulsanti del planner. */
 button,
 .option-button {
     cursor: pointer;
+
     border: 1px solid #c0d4c7;
     border-radius: var(--radius-sm);
     padding: 8px 10px;
@@ -198,10 +284,20 @@ button,
     font-size: 0.92rem;
     font-weight: 700;
 
-    background: linear-gradient(180deg, #f8fcf9 0%, #e5efe8 100%);
-    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    background: linear-gradient(
+        180deg,
+        #f8fcf9 0%,
+        #e5efe8 100%
+    );
+
+    /* Rende graduali le modifiche visive al passaggio del mouse. */
+    transition:
+        transform 0.12s ease,
+        box-shadow 0.12s ease,
+        border-color 0.12s ease;
 }
 
+/* Leggero effetto di sollevamento quando il mouse passa sul pulsante. */
 button:hover,
 .option-button:hover {
     transform: translateY(-1px);
@@ -209,7 +305,12 @@ button:hover,
     box-shadow: 0 6px 14px rgba(47, 127, 73, 0.18);
 }
 
-/* Mission Blocks */
+
+/* =========================
+   Mission Blocks
+   ========================= */
+
+/* Arrotonda i contenitori dei parametri, waypoint e azioni. */
 #globalParameters div,
 #waypointsList div,
 div[id^="waypoint-"],
@@ -217,53 +318,117 @@ div[id^="action-"] {
     border-radius: var(--radius-sm);
 }
 
+/* Ogni waypoint viene rappresentato da un blocco distinto. */
 div[id^="waypoint-"] {
     margin-bottom: 10px;
     padding: 10px;
+
     border: 1px solid #dbe8e0;
     background: #f9fcfa;
 }
 
+/* Testo delle coordinate del waypoint. */
 div[id^="waypoint-"] > b {
     font-size: 0.94rem;
 }
 
+/* Stile per eventuali elementi dedicati alle coordinate. */
 .waypoint-coordinates {
     border: 1px solid #d5dfd8;
 }
 
+
+/* =========================
+   Waypoint Speed & Quote
+   ========================= */
+
+/* Dispone etichetta e input sulla stessa riga. */
+/* > seleziona solo i label figli diretti del blocco waypoint. */
+div[id^="waypoint-"] > label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+
+    margin-top: 8px;
+
+    color: var(--ui-muted);
+    font-size: var(--label-font-size);
+    font-weight: 600;
+}
+
+/* Input numerici per velocità e quota di ciascun waypoint. */
+.waypoint-speed,
+.waypoint-quote {
+    width: 120px;
+    max-width: 50%;
+    min-width: 0;
+
+    padding: 6px 8px;
+
+    border: 1px solid #c9d9ce;
+    border-radius: var(--radius-xs);
+    background: #ffffff;
+
+    color: var(--ui-text);
+    font-family: var(--font-sans);
+    font-size: 0.92rem;
+}
+
+/* Evidenzia il campo attualmente selezionato. */
+.waypoint-speed:focus,
+.waypoint-quote:focus {
+    outline: 2px solid #b5dbc3;
+    border-color: #8db89c;
+}
+
+
+/* =========================
+   Actions
+   ========================= */
+
+/* Contenitore delle azioni associate a un waypoint. */
 .actions-list {
     margin-top: 10px;
     padding: 8px;
+
     border-radius: var(--radius-sm);
     background: var(--ui-surface-soft);
 }
 
+/* Aspetto dei singoli blocchi azione. */
 .action-item,
 div[id^="action-"] {
     margin-top: 8px;
     padding: 8px;
+
     border-left: 2px solid #93b5a1;
     background: #f7fbf8;
 }
 
+/* Dispone le azioni una sotto l'altra. */
 .action-items {
     display: flex;
     flex-direction: column;
 }
 
+/* Indica che le azioni possono essere trascinate per riordinarle. */
 .action-draggable {
     cursor: move;
 }
 
+/* Segnaposto mostrato da jQuery UI durante il trascinamento. */
 .action-sort-placeholder {
     margin-top: 8px;
     min-height: 38px;
+
     border: 2px dashed #b78cae;
     border-radius: var(--radius-xs);
+
     background: rgba(255, 43, 214, 0.08);
 }
 
+/* Link utilizzati per aggiungere o rimuovere azioni e waypoint. */
 .add-action,
 .remove-action,
 .remove-waypoint {
@@ -272,22 +437,30 @@ div[id^="action-"] {
     font-weight: 700;
 }
 
+/* Colore verde per l'aggiunta delle azioni. */
 .add-action {
     color: var(--ui-accent);
 }
 
+/* Colore rosso per le operazioni di eliminazione. */
 .remove-action,
 .remove-waypoint {
     color: var(--ui-danger);
 }
 
+/* Sottolinea i link quando il mouse passa sopra. */
 .add-action:hover,
 .remove-action:hover,
 .remove-waypoint:hover {
     text-decoration: underline;
 }
 
-/* Parameter Rows */
+
+/* =========================
+   Parameter Rows
+   ========================= */
+
+/* Stile comune agli input dei parametri globali e delle azioni. */
 .parameter-input {
     width: auto;
     min-width: 96px;
@@ -302,35 +475,46 @@ div[id^="action-"] {
     font-family: var(--font-sans);
 }
 
+/* Evidenzia l'input che ha il focus. */
 .parameter-input:focus {
     outline: 2px solid #b5dbc3;
     border-color: #8db89c;
 }
 
+/* Compatta leggermente la sezione dei parametri globali. */
 #globalParameters .actions-list {
     padding: 6px 8px;
 }
 
+/* Etichette dei parametri: evita che testi lunghi deformino il layout. */
 #globalParameters .actions-list span,
 div[id^="action-"] > div > div > span {
     min-width: 0;
     overflow: hidden;
+
+    /* Nasconde il testo in eccesso con tre puntini. */
     text-overflow: ellipsis;
     white-space: nowrap;
+
     font-size: var(--label-font-size);
 }
 
+/* Permette alle etichette delle azioni di occupare lo spazio libero. */
 div[id^="action-"] > div > div > span {
     flex: 1 1 auto;
 }
 
+/* Assegna una larghezza costante agli input dei parametri. */
 #globalParameters .parameter-input,
 div[id^="action-"] > div > div > input.parameter-input {
     width: var(--control-height);
     min-width: var(--control-height);
+
+    /* Impedisce all'input di restringersi o allargarsi nel flexbox. */
     flex: 0 0 var(--control-height);
 }
 
+/* Allinea etichetta e input dei parametri delle azioni. */
 div[id^="action-"] > div > div {
     display: flex;
     align-items: center;
@@ -338,12 +522,18 @@ div[id^="action-"] > div > div {
     margin: 6px 0;
 }
 
-/* Popup Form */
+
+/* =========================
+   Popup Form
+   ========================= */
+
+/* Il popup è inizialmente nascosto e viene aperto da jQuery UI. */
 #popup {
     display: none;
     padding: 8px;
 }
 
+/* Organizza ogni campo del popup con etichetta sopra l'input. */
 .form-group {
     display: flex;
     flex-direction: column;
@@ -351,12 +541,14 @@ div[id^="action-"] > div > div {
     margin-bottom: 10px;
 }
 
+/* Etichette dei parametri nel popup. */
 .form-group label {
     color: #1f4c2f;
     font-size: 0.92rem;
     font-weight: 700;
 }
 
+/* Stile condiviso tra la select e gli input del popup. */
 select,
 .form-group input {
     width: 100%;
@@ -370,60 +562,96 @@ select,
     font-size: 0.92rem;
 }
 
-/* jQuery UI Dialog */
+
+/* =========================
+   jQuery UI Dialog
+   ========================= */
+
+/* Contenitore principale della finestra per aggiungere azioni. */
 .ui-dialog {
     overflow: hidden;
+
     border: 1px solid var(--ui-border);
     border-radius: var(--radius-md);
+
     box-shadow: 0 18px 40px rgba(16, 48, 31, 0.26);
 }
 
+/* Sovrascrive alcuni bordi predefiniti di jQuery UI. */
 .ui-widget.ui-widget-content {
     border: 1px solid var(--ui-border);
 }
 
+/* Barra del titolo del popup. */
 .ui-dialog .ui-dialog-titlebar {
     border: none;
     padding: 10px 12px;
+
     color: #ffffff;
     background: var(--topbar-bg);
 }
 
+/* Testo del titolo del popup. */
 .ui-dialog .ui-dialog-title {
     font-family: var(--font-display);
     font-size: 0.98rem;
     font-weight: 700;
 }
 
+/* Area interna del popup contenente i campi. */
 .ui-dialog .ui-dialog-content {
     background: var(--ui-surface);
 }
 
+/* Sezione inferiore con il pulsante Add. */
 .ui-dialog .ui-dialog-buttonpane {
     border-top: 1px solid #dce7e0;
     background: #f3f7f4;
 }
 
+/* Margini dei pulsanti all'interno del popup. */
 .ui-dialog .ui-dialog-buttonpane button {
     margin: 0.3em 0.4em;
 }
 
-/* Responsive */
+
+/* =========================
+   Responsive
+   ========================= */
+
+/* Su schermi più stretti mappa e sidebar vengono impilate. */
 @media (max-width: 1120px) {
+
     .layout-shell {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
+
+        /* Consente di scorrere fino alla sidebar sotto la mappa. */
+        overflow-y: auto;
+        align-content: start;
+    }
+
+    .map-panel {
+        /* Assegna una dimensione visibile alla mappa. */
+        height: 56vh;
+        min-height: 320px;
     }
 
     #map {
-        height: 56vh;
+        width: 100%;
+        height: 100%;
     }
 
     #sidebar {
         padding-right: 0;
+
+        /* Lo scorrimento viene gestito dal contenitore principale. */
+        overflow: visible;
     }
 }
 
+/* Adattamenti aggiuntivi per gli schermi degli smartphone. */
 @media (max-width: 640px) {
+
     .topbar {
         padding: 12px 14px;
     }
@@ -441,10 +669,12 @@ select,
         padding: 10px;
     }
 
+    /* I pulsanti principali vengono disposti uno sotto l'altro. */
     #options {
         grid-template-columns: 1fr;
     }
 
+    /* Riduce la larghezza degli input sui dispositivi mobili. */
     #globalParameters .parameter-input,
     div[id^="action-"] > div > div > input.parameter-input {
         width: var(--control-height-mobile);
@@ -452,6 +682,7 @@ select,
         flex-basis: var(--control-height-mobile);
     }
 
+    /* Permette alle etichette lunghe di occupare più righe. */
     div[id^="action-"] > div > div > span {
         white-space: normal;
     }

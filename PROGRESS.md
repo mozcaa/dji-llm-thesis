@@ -16,10 +16,16 @@
 - Aggiornato server.py per mantenere payloadIndex globale.
 - Revisionato il frontend e corretti alcuni errori.
 
+- 11/08/2026
+- Completato il primo prototipo del planner, sistemando il CSS.
+- Effettuato un leggero refactoring di script.js, riorganizzando le varie componenti e aggiungendo commenti esplicativi.
+- Testate le principali funzionalità del planner (importazione ed esportazione KMZ, Undo/Redo, aggiunta e rimozione di waypoint e azioni).
+- Creato il primo prototipo di validator.py per verificare i parametri delle azioni. (NON INTEGRATO ANCORA)
+
+
 ### Next steps
-- Completare le modifiche al frontend JavaScript.
-- Commentare il frontend.
-- Valutare un refactoring mirato del frontend per migliorarne leggibilità e organizzazione.
-- Testare il funzionamento complessivo del planner, verificando la creazione e modifica dei waypoint, Undo/Redo e l'esportazione e reimportazione dei KMZ.
-- Eventualmente trovare un modo per visualizzare nomi di città e confini degli Stati sulla mappa.
+- Integrare e testare il validatore nel backend Flask.
+- Rendere il frontend più robusto, utilizzando intervalli numerici e menu a tendina nei form delle azioni, così da limitare l'inserimento di valori non validi.
+- Verificare la compatibilità dei KMZ generati con l'app Android DJI e il simulatore.
+- Valutare la possibilità di visualizzare nomi delle città e confini degli Stati sulla mappa.
 - Iniziare l'integrazione di un LLM locale per generare missioni a partire da istruzioni in linguaggio naturale.
