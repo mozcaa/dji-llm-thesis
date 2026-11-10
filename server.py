@@ -5,6 +5,7 @@ import copy
 from flask import Flask, render_template, jsonify, request, send_from_directory
 from mission import create_mock_mission, print_mission, Waypoint, Action, ACTIONS, create_empty_mission, mission_from_dict
 from parser_xml import mission_to_kmz, kmz_to_mission
+import validator  #validatorFun, validateFocus, validatetakePhoto, validategimbalRotate, validaterotateYaw, validatehover, validatezoom, validateRange, validateExistingIndex, validateNewWaypoint, validateNewWaypointAt, validateUpdateWaypoint, validateUpdateWaypointSpeed, validateUpdateWaypointQuote
 
 
 # Applicazione Flask e missione conservata in memoria.
@@ -104,14 +105,26 @@ def available_actions():
 # Aggiunge un waypoint alla fine della missione, con quota e velocità proprie.
 @app.route('/add_waypoint', methods=['POST'])
 def add_waypoint():
-    data = request.get_json()
-    lat = float(data.get('lat'))
-    lon = float(data.get('lon'))
-    speed = float(data.get('speed', 5.0))   # Valore iniziale se il frontend non lo invia.
-    quote = float(data.get('quote', 10.0))  # Quota iniziale se il frontend non la invia.
 
+    data = request.get_json(silent=True) # Restituisce None se il JSON è assente o non valido, senza sollevare automaticamente un errore HTTP.
+
+    if not isinstance(data, dict): #controlla che il JSON ricevuto sia effettivamente un oggetto
+     return jsonify({
+         "status": "failed",
+         "message": "Richiesta JSON non valida"
+     }), 400
+    
+    lat = data.get('lat')
+    lon = data.get('lon')
+    speed = data.get('speed', 5.0)  # Valore iniziale se il frontend non lo invia.
+    quote = data.get('quote', 10.0)  # Quota iniziale se il frontend non la invia.
+
+    status, message= validator.validateNewWaypoint(lat, lon, speed, quote)
+    if not(status): 
+     return jsonify({"status": "failed", "message": message}), 400 
+    
     _record_undo_state()
-    wp_new = Waypoint(lat=lat, lon=lon, speed=speed, quote=quote)
+    wp_new = Waypoint(lat=float(lat), lon=float(lon), speed=float(speed), quote=float(quote))
     mission.add_waypoint(wp_new)  # Aggiorna anche gli ID.
 
     print(f"Creating new waypoint {wp_new} with new coordinates: {lat}, {lon}, speed: {speed} and quote: {quote}")
@@ -122,15 +135,26 @@ def add_waypoint():
 # Inserisce un waypoint nella posizione indicata, con quota e velocità proprie.
 @app.route('/add_waypoint_at', methods=['POST'])
 def add_waypoint_at():
-    data = request.get_json()
-    lat = float(data.get('lat'))
-    lon = float(data.get('lon'))
-    speed = float(data.get('speed', 5.0))
-    quote = float(data.get('quote', 10.0))
-    index = int(data.get('index'))
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict): #controlla che il JSON ricevuto sia effettivamente un oggetto
+     return jsonify({
+         "status": "failed",
+         "message": "Richiesta JSON non valida"
+     }), 400
+
+    lat = data.get('lat')
+    lon = data.get('lon')
+    speed = data.get('speed', 5.0)
+    quote =data.get('quote', 10.0)
+    index = data.get('index')
+
+    status, message= validator.validateNewWaypointAt(lat, lon, speed, quote, index, len(mission.waypoints))
+    if not(status): 
+     return jsonify({"status": "failed", "message": message}), 400 
 
     _record_undo_state()
-    wp_new = Waypoint(lat=lat, lon=lon, speed=speed, quote=quote)
+    wp_new = Waypoint(lat=float(lat), lon=float(lon), speed=float(speed), quote=float(quote))
     mission.add_waypoint_at(wp_new, index)  # Inserisce il punto senza sostituire quelli esistenti.
 
     print(f"Creating new waypoint {wp_new} between with new coordinates: {lat}, {lon}, speed: {speed} and quote: {quote}")
@@ -138,16 +162,25 @@ def add_waypoint_at():
     return jsonify({"status": "success", "message": f"Waypoint added successfully"}), 200
 
 
+
 # Aggiorna le coordinate di un waypoint esistente.
 @app.route('/update_waypoint', methods=['POST'])
 def update_waypoint():
-    data = request.get_json()
-    waypoint_id = int(data.get('waypoint_id'))
-    lat = float(data.get('lat'))
-    lon = float(data.get('lon'))
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({"status": "failed", "message": "Richiesta JSON non valida"}), 400
+
+    waypoint_id = data.get('waypoint_id')
+    lat = data.get('lat')
+    lon = data.get('lon')
+
+    status, message = validator.validateUpdateWaypoint(lat, lon, waypoint_id, len(mission.waypoints))
+    if not status:
+        return jsonify({"status": "failed", "message": message}), 400
 
     _record_undo_state()
-    mission.waypoints[waypoint_id].update_waypoint_coordinates(lat, lon)
+    mission.waypoints[waypoint_id].update_waypoint_coordinates(float(lat), float(lon))
 
     print(f"Updating waypoint {waypoint_id} with new coordinates: {lat}, {lon}")
     print_mission(mission)
@@ -157,12 +190,20 @@ def update_waypoint():
 # Aggiorna la velocità del tratto che parte dal waypoint indicato.
 @app.route('/update_waypoint/speed', methods=['POST'])
 def update_waypoint_speed():
-    data = request.get_json()
-    waypoint_id = int(data.get('waypoint_id'))
-    speed = float(data.get('speed'))
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({"status": "failed", "message": "Richiesta JSON non valida"}), 400
+
+    waypoint_id = data.get('waypoint_id')
+    speed = data.get('speed')
+
+    status, message = validator.validateUpdateWaypointSpeed(speed, waypoint_id, len(mission.waypoints))
+    if not status:
+        return jsonify({"status": "failed", "message": message}), 400
 
     _record_undo_state()
-    mission.waypoints[waypoint_id].update_waypoint_speed(speed)
+    mission.waypoints[waypoint_id].update_waypoint_speed(float(speed))
 
     print(f"Updating waypoint {waypoint_id} with new speed: {speed}")
     print_mission(mission)
@@ -172,16 +213,25 @@ def update_waypoint_speed():
 # Aggiorna la quota di un waypoint esistente.
 @app.route('/update_waypoint/quote', methods=['POST'])
 def update_waypoint_quote():
-    data = request.get_json()
-    waypoint_id = int(data.get('waypoint_id'))
-    quote = float(data.get('quote'))
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({"status": "failed", "message": "Richiesta JSON non valida"}), 400
+
+    waypoint_id = data.get('waypoint_id')
+    quote = data.get('quote')
+
+    status, message = validator.validateUpdateWaypointQuote(quote, waypoint_id, len(mission.waypoints))
+    if not status:
+        return jsonify({"status": "failed", "message": message}), 400
 
     _record_undo_state()
-    mission.waypoints[waypoint_id].update_waypoint_quote(quote)
+    mission.waypoints[waypoint_id].update_waypoint_quote(float(quote))
 
     print(f"Updating waypoint {waypoint_id} with new quote: {quote}")
     print_mission(mission)
     return jsonify({"status": "success", "message": "Waypoint quote updated successfully"}), 200
+
 
 
 # Aggiorna il payloadIndex, unico parametro globale della missione.
