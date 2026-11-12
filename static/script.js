@@ -39,12 +39,21 @@ function byId(id) {
     return document.getElementById(id);
 }
 
-// Controlla la risposta HTTP e segnala un errore se la richiesta non è andata a buon fine.
-function ensureOk(response, errorMessage) {
-    // fetch non lancia errori per risposte HTTP 4xx/5xx: li controlliamo qui.
+
+// Verifica la risposta HTTP e recupera, se presente, il messaggio del validatore Python.
+async function ensureOk(response, errorMessage) {
+    // fetch non considera le risposte HTTP 400/500 errori JavaScript:
+    // dobbiamo controllarle esplicitamente.
     if (!response.ok) {
-        throw new Error(errorMessage);
+
+        // Legge il JSON restituito da Flask.
+        // Se il corpo non è un JSON valido, utilizza un oggetto vuoto.
+        const data = await response.json().catch(() => ({}));
+
+        // Usa il messaggio del backend oppure quello generico.
+        throw new Error(data.message || errorMessage);
     }
+
     return response;
 }
 
@@ -173,6 +182,8 @@ function addWaypoint(latLng) {
         })
         .catch((error) => {
             console.error('Error adding waypoint:', error);
+            // Mostra il messaggio del validatore.
+            alert(error.message);
         });
 }
 
@@ -190,6 +201,7 @@ function addWaypointAt(latLng, index) {
         })
         .catch((error) => {
             console.error('Error adding waypoint at:', error);
+            alert(error.message);
         });
 }
 
@@ -209,23 +221,17 @@ function updateWaypoint(waypoint) {
         })
         .catch((error) => {
             console.error('Error updating waypoint on server:', error);
+            alert(error.message); 
+            refreshMission();          
         });
 }
 
 // Controlla e aggiorna la velocità del tratto in uscita da un waypoint.
 function updateSpeed(waypoint, newspeed) {
-    const speed = Number(newspeed);  // Converte il valore ricevuto in numero.
-
-    // Scarta stringhe vuote, numeri non finiti e velocità non positive.
-    if (newspeed.trim() === '' || !Number.isFinite(speed) || speed <= 0) {
-        // In caso di input errato ripristina il valore presente sul server.
-        refreshMission();
-        return;
-    }
 
     postJson('/update_waypoint/speed', {
         waypoint_id: waypoint.waypoint_id,
-        speed: speed
+        speed: newspeed
     })
         .then((response) => ensureOk(response, 'Failed to update waypoint on server.'))
         .then((response) => response.json())
@@ -235,23 +241,18 @@ function updateSpeed(waypoint, newspeed) {
         })
         .catch((error) => {
             console.error('Error updating waypoint on server:', error);
+            alert(error.message);
             refreshMission();
         });
 }
 
 // Controlla e aggiorna la quota del waypoint.
 function updateQuote(waypoint, newquote) {
-    const quote = Number(newquote);  // Converte il valore ricevuto in numero.
 
-    // La quota può essere anche 0: qui controlliamo che sia un numero valido.
-    if (newquote.trim() === '' || !Number.isFinite(quote)) {
-        refreshMission();
-        return;
-    }
 
     postJson('/update_waypoint/quote', {
         waypoint_id: waypoint.waypoint_id,
-        quote: quote
+        quote: newquote
     })
         .then((response) => ensureOk(response, 'Failed to update waypoint on server.'))
         .then((response) => response.json())
@@ -261,6 +262,7 @@ function updateQuote(waypoint, newquote) {
         })
         .catch((error) => {
             console.error('Error updating waypoint on server:', error);
+            alert(error.message);
             refreshMission();
         });
 }
@@ -277,6 +279,8 @@ function updateGlobalParameter(variable, value) {
         })
         .catch((error) => {
             console.error('Error updating global parameter on server:', error);
+            alert(error.message);
+            refreshMission();
         });
 }
 
@@ -298,6 +302,8 @@ function updateAction(waypointId, actionId, param, value) {
         })
         .catch((error) => {
             console.error('Error updating action on server:', error);
+            alert(error.message);
+            refreshMission();
         });
 }
 
@@ -312,25 +318,31 @@ function removeWaypoint(waypointId) {
         })
         .catch((error) => {
             console.error('Error removing waypoint:', error);
+            alert(error.message);
         });
 }
 
-// Aggiunge un'azione con i suoi parametri a un waypoint.
+// Aggiunge un'azione a un waypoint.
+// Il popup si chiude SOLO se il server accetta l'azione.
 function addAction(waypointId, actionType, parameters) {
     postJson('/add_action', {
-        waypoint_id: waypointId,
+         waypoint_id: waypointId,
         action_type: actionType,
-        // Forma abbreviata di "parameters: parameters".
         parameters
     })
         .then((response) => ensureOk(response, 'Failed to add action on server.'))
         .then((response) => response.json())
         .then((data) => {
             console.log(data.message);
+
+            // Chiude la finestra soltanto dopo una risposta HTTP positiva.
+            $('#popup').dialog('close');
+
             refreshMission();
         })
         .catch((error) => {
             console.error('Error adding action:', error);
+            alert(error.message);
         });
 }
 
@@ -348,6 +360,7 @@ function removeAction(waypointId, actionId) {
         })
         .catch((error) => {
             console.error('Error removing action:', error);
+            alert(error.message);
         });
 }
 
@@ -638,10 +651,14 @@ function updateParameters() {
     });
 }
 
+
+
 // Legge i parametri inseriti nel popup e chiede al server di aggiungere l'azione.
 function handleAddButtonClick(waypointId) {
     const selectedAction = byId('actionSelect').value;
+
     if (!selectedAction) {
+        alert('Seleziona un tipo di azione.');
         return;
     }
 
@@ -652,15 +669,16 @@ function handleAddButtonClick(waypointId) {
     parameters.forEach((param) => {
         // Cerca l'input del popup con l'attributo name corrispondente.
         const input = document.querySelector(`[name=${param}]`);
+
         if (input) {
-            params[param] = input.value;  // Costruisce il dizionario dei parametri dell'azione.
+            params[param] = input.value;
         }
     });
 
+    // Non chiudiamo qui il popup: addAction() aspetterà la risposta del server.
     addAction(waypointId, selectedAction, params);
-    // Chiude la finestra dopo aver richiesto l'aggiunta dell'azione.
-    $('#popup').dialog('close');
 }
+
 
 // Abilita il riordino delle azioni con drag & drop tramite jQuery UI.
 function enableActionSorting(actionItemsContainer, waypointId) {

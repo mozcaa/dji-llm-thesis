@@ -2,33 +2,82 @@
 import math
 
 
-# Funzione principale che richiama il validatore corretto.
-def validatorFun(action_name, parameters):
+# Seleziona il validatore dell'azione da AGGIUNGERE.
+# Ogni funzione verifica i parametri e l'indice del waypoint.
+def validatorAddFun(action_name, parameters, waypointindex, waypointnumber):
 
     if not isinstance(parameters, dict):
         return False, "I parametri dell'azione devono essere un dizionario"
 
     if action_name == "focus":
-        return validateFocus(parameters)
+        return validateFocus(parameters, waypointindex, waypointnumber)
 
     elif action_name == "takePhoto":
-        return validatetakePhoto(parameters)
+        return validatetakePhoto(parameters, waypointindex, waypointnumber)
 
     elif action_name == "gimbalRotate":
-        return validategimbalRotate(parameters)
+        return validategimbalRotate(parameters, waypointindex, waypointnumber)
 
     elif action_name == "rotateYaw":
-        return validaterotateYaw(parameters)
+        return validaterotateYaw(parameters, waypointindex, waypointnumber)
 
     elif action_name == "hover":
-        return validatehover(parameters)
+        return validatehover(parameters, waypointindex, waypointnumber)
 
     elif action_name == "zoom":
-        return validatezoom(parameters)
+        return validatezoom(parameters, waypointindex, waypointnumber)
 
     else:
         return False, f"Azione sconosciuta: {action_name}"
+
+
+# Seleziona il validatore per la modifica di UN parametro di un'azione.
+# Riceve il nome dell'azione già recuperato dal modello in server.py.
+# Le funzioni specifiche controllano anche gli indici del waypoint e dell'azione.
+def validatorFunUpdate(action_name, parameter, waypointindex, waypointnumber, parametername, actionindex, actionnumber):
+
+    if action_name == "focus":
+        return validateFocusUpdate(parameter, waypointindex, waypointnumber, parametername, actionindex, actionnumber)
+
+    elif action_name == "takePhoto":
+        return validatetakePhotoUpdate(parameter, waypointindex, waypointnumber, parametername, actionindex, actionnumber)
+
+    elif action_name == "gimbalRotate":
+        return validategimbalRotateUpdate(parameter, waypointindex, waypointnumber, parametername, actionindex, actionnumber)
+
+    elif action_name == "rotateYaw":
+        return validaterotateYawUpdate(parameter, waypointindex, waypointnumber, parametername, actionindex, actionnumber)
+
+    elif action_name == "hover":
+        return validatehoverUpdate(parameter, waypointindex, waypointnumber, parametername, actionindex, actionnumber)
+
+    elif action_name == "zoom":
+        return validatezoomUpdate(parameter, waypointindex, waypointnumber, parametername, actionindex, actionnumber)
+
+    else:
+        return False, f"Azione sconosciuta: {action_name}"
+
+
+
+
     
+
+
+# Controlla che siano presenti tutti e soli i parametri richiesti.
+def validateRequiredParameters(parameters, required):
+
+    missing = required - parameters.keys()
+    extra = parameters.keys() - required
+
+    if missing:
+        return False, f"Parametri mancanti: {', '.join(sorted(missing))}"
+
+    if extra:
+        return False, f"Parametri sconosciuti: {', '.join(sorted(extra))}"
+
+    return True, None
+
+
 # Controlla che un valore sia numerico, finito e compreso nell'intervallo indicato.
 # Questa funzione viene riutilizzata per coordinate, quota e velocità.
 def validateRange(value, minimum, maximum, name):
@@ -39,7 +88,7 @@ def validateRange(value, minimum, maximum, name):
         return False, f"{name} non può essere un booleano"
 
     try:
-        value = float(value)  
+        value = float(value)
 
     except (ValueError, TypeError, OverflowError):
         return False, f"{name} deve essere un numero"
@@ -66,6 +115,65 @@ def validateExistingIndex(waypointindex, waypointnumber):
         return False, f"Waypoint inesistente: indice {waypointindex}"
 
     return True, None
+
+
+# Controlla che l'indice identifichi un'azione esistente nel waypoint.
+# actionnumber è il numero di azioni di QUEL waypoint (non dell'intera missione).
+def validateExistingIndexAction(actionindex, actionnumber):
+
+    # Evitiamo sia gli indici decimali che i booleani.
+    if type(actionindex) is not int:
+        return False, "L'indice dell'azione deve essere un intero"
+
+    if not (0 <= actionindex < actionnumber):
+        return False, f"Azione inesistente: indice {actionindex}"
+
+    return True, None
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Controlla il payload globale della missione.
+def validateGlobalParameter(parameter, value):
+
+    if parameter == "payloadIndex":
+
+        try:
+            # Accettiamo soltanto numeri interi.
+            if isinstance(value, bool):
+                return False, "payloadIndex non può essere un booleano"
+
+            number = int(value)
+
+            if str(number) != str(value):
+                return False, "payloadIndex deve essere un numero intero"
+
+            if number in {0, 1, 2}:
+                return True, None
+
+            return False, "payloadIndex deve essere 0, 1 o 2"
+
+        except (ValueError, TypeError, OverflowError):
+            return False, "payloadIndex deve essere un numero intero valido"
+
+    # Parametro globale sconosciuto.
+    return False, f"Parametro globale sconosciuto: {parameter}"
 
 
 # Controlla che latitudine e longitudine siano coordinate geografiche valide.
@@ -133,23 +241,28 @@ def validateUpdateWaypointQuote(quote, waypointindex, waypointnumber):
     return validIndex and validQuote, errorIndex or errorQuote
 
 
-# Controlla che siano presenti tutti e soli i parametri richiesti.
-def validateRequiredParameters(parameters, required):
 
-    missing = required - parameters.keys()
-    extra = parameters.keys() - required
 
-    if missing:
-        return False, f"Parametri mancanti: {', '.join(sorted(missing))}"
 
-    if extra:
-        return False, f"Parametri sconosciuti: {', '.join(sorted(extra))}"
 
-    return True, None
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Controlla i parametri dell'azione focus.
-def validateFocus(parameters):
+def validateFocus(parameters, waypointindex, waypointnumber):
 
     required = {"payloadPositionIndex", "focusX", "focusY"}
 
@@ -157,11 +270,15 @@ def validateFocus(parameters):
     if not status:
         return False, message
 
+    validIndex, errorIndex = validateExistingIndex(waypointindex, waypointnumber)
+    if not validIndex:
+        return False, errorIndex
+
     try:
         for key, value in parameters.items():
 
             if isinstance(value, bool):
-              return False, f"{key} non può essere un booleano"
+                return False, f"{key} non può essere un booleano"
 
             if key == "payloadPositionIndex":
                 if float(value) not in {0, 1, 2}:
@@ -185,7 +302,7 @@ def validateFocus(parameters):
 
 
 # Controlla i parametri dell'azione takePhoto.
-def validatetakePhoto(parameters):
+def validatetakePhoto(parameters, waypointindex, waypointnumber):
 
     required = {"payloadPositionIndex", "fileSuffix"}
 
@@ -193,12 +310,16 @@ def validatetakePhoto(parameters):
     if not status:
         return False, message
 
+    validIndex, errorIndex = validateExistingIndex(waypointindex, waypointnumber)
+    if not validIndex:
+        return False, errorIndex
+
     try:
         for key, value in parameters.items():
 
             if isinstance(value, bool):
-              return False, f"{key} non può essere un booleano"
-            
+                return False, f"{key} non può essere un booleano"
+
             if key == "payloadPositionIndex":
                 if float(value) not in {0, 1, 2}:
                     return False, "payloadPositionIndex deve essere 0, 1 o 2"
@@ -217,7 +338,7 @@ def validatetakePhoto(parameters):
 
 
 # Controlla i parametri dell'azione gimbalRotate.
-def validategimbalRotate(parameters):
+def validategimbalRotate(parameters, waypointindex, waypointnumber):
 
     required = {
         "payloadPositionIndex",
@@ -232,11 +353,15 @@ def validategimbalRotate(parameters):
     if not status:
         return False, message
 
+    validIndex, errorIndex = validateExistingIndex(waypointindex, waypointnumber)
+    if not validIndex:
+        return False, errorIndex
+
     try:
         for key, value in parameters.items():
 
             if isinstance(value, bool):
-              return False, f"{key} non può essere un booleano"
+                return False, f"{key} non può essere un booleano"
 
             if key == "payloadPositionIndex":
                 if float(value) not in {0, 1, 2}:
@@ -274,7 +399,7 @@ def validategimbalRotate(parameters):
 
 
 # Controlla i parametri dell'azione rotateYaw.
-def validaterotateYaw(parameters):
+def validaterotateYaw(parameters, waypointindex, waypointnumber):
 
     required = {"aircraftHeading"}
 
@@ -282,11 +407,15 @@ def validaterotateYaw(parameters):
     if not status:
         return False, message
 
+    validIndex, errorIndex = validateExistingIndex(waypointindex, waypointnumber)
+    if not validIndex:
+        return False, errorIndex
+
     try:
         for key, value in parameters.items():
 
             if isinstance(value, bool):
-              return False, f"{key} non può essere un booleano"
+                return False, f"{key} non può essere un booleano"
 
             if key == "aircraftHeading":
                 angle = float(value)
@@ -304,7 +433,7 @@ def validaterotateYaw(parameters):
 
 
 # Controlla i parametri dell'azione hover.
-def validatehover(parameters):
+def validatehover(parameters, waypointindex, waypointnumber):
 
     required = {"hoverTime"}
 
@@ -312,11 +441,15 @@ def validatehover(parameters):
     if not status:
         return False, message
 
+    validIndex, errorIndex = validateExistingIndex(waypointindex, waypointnumber)
+    if not validIndex:
+        return False, errorIndex
+
     try:
         for key, value in parameters.items():
 
             if isinstance(value, bool):
-              return False, f"{key} non può essere un booleano"
+                return False, f"{key} non può essere un booleano"
 
             if key == "hoverTime":
                 time = float(value)
@@ -334,7 +467,7 @@ def validatehover(parameters):
 
 
 # Controlla i parametri dell'azione zoom.
-def validatezoom(parameters):
+def validatezoom(parameters, waypointindex, waypointnumber):
 
     required = {"payloadPositionIndex", "focalLength"}
 
@@ -342,11 +475,15 @@ def validatezoom(parameters):
     if not status:
         return False, message
 
+    validIndex, errorIndex = validateExistingIndex(waypointindex, waypointnumber)
+    if not validIndex:
+        return False, errorIndex
+
     try:
         for key, value in parameters.items():
 
             if isinstance(value, bool):
-              return False, f"{key} non può essere un booleano"
+                return False, f"{key} non può essere un booleano"
 
             if key == "payloadPositionIndex":
                 if float(value) not in {0, 1, 2}:
@@ -367,28 +504,233 @@ def validatezoom(parameters):
     return True, None
 
 
-# Controlla il payload globale della missione.
-def validateGlobalParameter(parameter, value):
 
-    if parameter == "payloadIndex":
 
-        try:
-            # Accettiamo soltanto numeri interi.
-            if isinstance(value, bool):
-                return False, "payloadIndex non può essere un booleano"
 
-            number = int(value)
 
-            if str(number) != str(value):
-                return False, "payloadIndex deve essere un numero intero"
 
-            if number in {0, 1, 2}:
-                return True, None
 
-            return False, "payloadIndex deve essere 0, 1 o 2"
 
-        except (ValueError, TypeError, OverflowError):
-            return False, "payloadIndex deve essere un numero intero valido"
 
-    # Parametro globale sconosciuto.
-    return False, f"Parametro globale sconosciuto: {parameter}"
+# Controlla un singolo parametro dell'azione focus.
+def validateFocusUpdate(parameter, waypointindex, waypointnumber, parametername, actionindex, actionnumber):
+
+    validIndex, errorIndex = validateExistingIndex(waypointindex, waypointnumber)
+    if not validIndex:
+        return False, errorIndex
+    validIndex, errorIndex = validateExistingIndex(actionindex, actionnumber)
+    if not validIndex:
+        return False, errorIndex
+
+    try:
+            if isinstance(parameter, bool):
+                return False, f"{parametername} non può essere un booleano"
+
+            if parametername == "payloadPositionIndex":
+                if float(parameter) not in {0, 1, 2}:
+                    return False, "payloadPositionIndex deve essere 0, 1 o 2"
+
+            elif parametername == "focusX":
+                if not (0 <= float(parameter) <= 1):
+                    return False, "focusX deve essere tra 0 e 1"
+
+            elif parametername == "focusY":
+                if not (0 <= float(parameter) <= 1):
+                    return False, "focusY deve essere tra 0 e 1"
+
+            else:
+                return False, f"Parametro sconosciuto: {parametername}"
+
+    except (ValueError, TypeError, OverflowError):
+        return False, f"Valore non numerico per {parametername}"
+
+    return True, None
+
+
+# Controlla un singolo parametro dell'azione takePhoto.
+def validatetakePhotoUpdate(parameter, waypointindex, waypointnumber, parametername, actionindex, actionnumber):
+
+    validIndex, errorIndex = validateExistingIndex(waypointindex, waypointnumber)
+    if not validIndex:
+        return False, errorIndex
+    validIndex, errorIndex = validateExistingIndex(actionindex, actionnumber)
+    if not validIndex:
+        return False, errorIndex
+
+    try:
+            if isinstance(parameter, bool):
+                return False, f"{parametername} non può essere un booleano"
+
+            if parametername == "payloadPositionIndex":
+                if float(parameter) not in {0, 1, 2}:
+                    return False, "payloadPositionIndex deve essere 0, 1 o 2"
+
+            elif parametername == "fileSuffix":
+                if not isinstance(parameter, str) or len(parameter) > 50:
+                    return False, "fileSuffix deve essere una stringa di massimo 50 caratteri"
+
+            else:
+                return False, f"Parametro sconosciuto: {parametername}"
+
+    except (ValueError, TypeError, OverflowError):
+        return False, f"Valore non valido per {parametername}"
+
+    return True, None
+
+
+# Controlla un singolo parametro dell'azione gimbalRotate.
+def validategimbalRotateUpdate(parameter, waypointindex, waypointnumber, parametername, actionindex, actionnumber):
+
+    validIndex, errorIndex = validateExistingIndex(waypointindex, waypointnumber)
+    if not validIndex:
+        return False, errorIndex
+    validIndex, errorIndex = validateExistingIndex(actionindex, actionnumber)
+    if not validIndex:
+        return False, errorIndex
+
+    try:
+            if isinstance(parameter, bool):
+                return False, f"{parametername} non può essere un booleano"
+
+            if parametername == "payloadPositionIndex":
+                if float(parameter) not in {0, 1, 2}:
+                    return False, "payloadPositionIndex deve essere 0, 1 o 2"
+
+            elif parametername == "gimbalRotateMode":
+                if parameter != "absoluteAngle":
+                    return False, "gimbalRotateMode deve essere absoluteAngle"
+
+            elif parametername == "gimbalPitchRotateEnable":
+                if float(parameter) not in {0, 1}:
+                    return False, "gimbalPitchRotateEnable deve essere 0 o 1"
+
+            elif parametername == "gimbalPitchRotateAngle":
+                angle = float(parameter)
+                if not math.isfinite(angle) or not (-180 <= angle <= 180):
+                    return False, "gimbalPitchRotateAngle deve essere tra -180 e 180"
+
+            elif parametername == "gimbalYawRotateEnable":
+                if float(parameter) not in {0, 1}:
+                    return False, "gimbalYawRotateEnable deve essere 0 o 1"
+
+            elif parametername == "gimbalYawRotateAngle":
+                angle = float(parameter)
+                if not math.isfinite(angle) or not (-180 <= angle <= 180):
+                    return False, "gimbalYawRotateAngle deve essere tra -180 e 180"
+
+            else:
+                return False, f"Parametro sconosciuto: {parametername}"
+
+    except (ValueError, TypeError, OverflowError):
+        return False, f"Valore non numerico per {parametername}"
+
+    return True, None
+
+
+# Controlla un singolo parametro dell'azione rotateYaw.
+def validaterotateYawUpdate(parameter, waypointindex, waypointnumber, parametername, actionindex, actionnumber):
+
+    validIndex, errorIndex = validateExistingIndex(waypointindex, waypointnumber)
+    if not validIndex:
+        return False, errorIndex
+    validIndex, errorIndex = validateExistingIndex(actionindex, actionnumber)
+    if not validIndex:
+        return False, errorIndex
+
+    try:
+            if isinstance(parameter, bool):
+                return False, f"{parametername} non può essere un booleano"
+
+            if parametername == "aircraftHeading":
+                angle = float(parameter)
+
+                if not math.isfinite(angle) or not (-180 <= angle <= 180):
+                    return False, "aircraftHeading deve essere tra -180 e 180"
+
+            else:
+                return False, f"Parametro sconosciuto: {parametername}"
+
+    except (ValueError, TypeError, OverflowError):
+        return False, f"Valore non numerico per {parametername}"
+
+    return True, None
+
+
+# Controlla un singolo parametro dell'azione hover.
+def validatehoverUpdate(parameter, waypointindex, waypointnumber, parametername, actionindex, actionnumber):
+
+    validIndex, errorIndex = validateExistingIndex(waypointindex, waypointnumber)
+    if not validIndex:
+        return False, errorIndex
+    validIndex, errorIndex = validateExistingIndex(actionindex, actionnumber)
+    if not validIndex:
+        return False, errorIndex
+
+    try:
+            if isinstance(parameter, bool):
+                return False, f"{parametername} non può essere un booleano"
+
+            if parametername == "hoverTime":
+                time = float(parameter)
+
+                if not math.isfinite(time) or not (0 < time <= 100000):
+                    return False, "hoverTime deve essere maggiore di 0 e minore o uguale a 100000"
+
+            else:
+                return False, f"Parametro sconosciuto: {parametername}"
+
+    except (ValueError, TypeError, OverflowError):
+        return False, f"Valore non numerico per {parametername}"
+
+    return True, None
+
+
+# Controlla un singolo parametro dell'azione zoom.
+def validatezoomUpdate(parameter, waypointindex, waypointnumber, parametername, actionindex, actionnumber):
+
+    validIndex, errorIndex = validateExistingIndex(waypointindex, waypointnumber)
+    if not validIndex:
+        return False, errorIndex
+    validIndex, errorIndex = validateExistingIndex(actionindex, actionnumber)
+    if not validIndex:
+        return False, errorIndex
+
+    try:
+            if isinstance(parameter, bool):
+                return False, f"{parametername} non può essere un booleano"
+
+            if parametername == "payloadPositionIndex":
+                if float(parameter) not in {0, 1, 2}:
+                    return False, "payloadPositionIndex deve essere 0, 1 o 2"
+
+            elif parametername == "focalLength":
+                focal = float(parameter)
+
+                if not math.isfinite(focal) or focal <= 0:
+                    return False, "focalLength deve essere un numero finito maggiore di 0"
+
+            else:
+                return False, f"Parametro sconosciuto: {parametername}"
+
+    except (ValueError, TypeError, OverflowError):
+        return False, f"Valore non numerico per {parametername}"
+
+    return True, None
+
+
+
+
+
+
+# Controlla che il waypoint da rimuovere esista.
+def validatorRemoveWaypoint(waypointindex, waypointnumber):
+    return validateExistingIndex(waypointindex, waypointnumber)
+
+
+# Controlla gli indici prima di rimuovere un'azione da un waypoint.
+def validatorRemoveAction(actionindex, actionnumber, waypointindex, waypointnumber):
+    validIndexWaypoint, errorIndexWaypoint = validateExistingIndex(waypointindex, waypointnumber)
+    validIndexAction, errorIndexAction = validateExistingIndexAction(actionindex, actionnumber)
+
+    # Restituisce il primo messaggio disponibile oppure None se entrambi gli indici sono validi.
+    return validIndexWaypoint and validIndexAction, errorIndexWaypoint or errorIndexAction
