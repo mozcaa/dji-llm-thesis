@@ -32,9 +32,15 @@
 - Integrata la validazione in cinque route Flask: add_waypoint, add_waypoint_at, update_waypoint, update_waypoint_speed e update_waypoint_quote.
 - Implementato il rifiuto delle richieste non valide prima di modificare la missione o registrare lo stato Undo.
 
+- Momentaneo stop in vista dell' esame
+
+- 18/11/2026
+- Migliorato il validatore, introducendo messaggi di errore specifici per gli input non validi (ad esempio, valori non numerici per il parametro speed).
+- Completata l'integrazione del validatore in server.py, includendo la rimozione dei waypoint, la gestione delle azioni e la modifica dei parametri globali.
+- Migliorato il frontend con la gestione degli input non validi, la visualizzazione dei messaggi di errore restituiti dal backend e il ripristino dei valori precedenti in caso di modifiche rifiutate.
+
 ### Next steps
-- Completare l'integrazione del validatore in server.py per rimozione waypoint, gestione delle azioni e parametri globali.
-- Migliorare il frontend con controlli sugli input e visualizzazione dei messaggi di errore.
+
 - Testare le richieste valide e non valide.
 - Verificare la compatibilità dei KMZ generati con l'app Android DJI e il simulatore.
 - Valutare la possibilità di visualizzare nomi delle città e confini degli Stati sulla mappa.
