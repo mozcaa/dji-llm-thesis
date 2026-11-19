@@ -24,9 +24,39 @@ const ROUTE_LAYER_ID = 'mission-route-layer';
 // Valori proposti quando si crea una nuova azione nel popup.
 const DEFAULT_ACTION_VALUES = {
     payloadPositionIndex: '0',
+    fileSuffix: '',
+
+    focusX: '0.5',
+    focusY: '0.5',
+
     gimbalRotateMode: 'absoluteAngle',
     gimbalPitchRotateEnable: '1',
-    gimbalYawRotateEnable: '1'
+    gimbalPitchRotateAngle: '0',
+    gimbalYawRotateEnable: '1',
+    gimbalYawRotateAngle: '0',
+
+    aircraftHeading: '0',
+    hoverTime: '2'
+};
+
+
+const PARAM_INPUT_CONFIG = {
+    payloadPositionIndex: { type: 'number', min: 0, max: 2, step: 1 },
+    fileSuffix: { type: 'text', maxLength: 50 },
+
+    focusX: { type: 'number', min: 0, max: 1, step: 'any' },
+    focusY: { type: 'number', min: 0, max: 1, step: 'any' },
+
+    focalLength: { type: 'number', min: 0.01, step: 'any' },
+
+    gimbalRotateMode: { type: 'text' },
+    gimbalPitchRotateEnable: { type: 'number', min: 0, max: 1, step: 1 },
+    gimbalPitchRotateAngle: { type: 'number', min: -180, max: 180, step: 'any' },
+    gimbalYawRotateEnable: { type: 'number', min: 0, max: 1, step: 1 },
+    gimbalYawRotateAngle: { type: 'number', min: -180, max: 180, step: 'any' },
+
+    aircraftHeading: { type: 'number', min: -180, max: 180, step: 'any' },
+    hoverTime: { type: 'number', min: 0.01, max: 100000, step: 'any' }
 };
 
 
@@ -636,10 +666,29 @@ function updateParameters() {
         const label = document.createElement('label');
         label.textContent = param;
 
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.name = param;
+        let input;
 
+        if (param === 'gimbalRotateMode') {
+           input = document.createElement('select');
+
+            const option = document.createElement('option');
+            option.value = 'absoluteAngle';
+            option.textContent = 'absoluteAngle';
+            input.appendChild(option);
+
+        } else {
+            input = document.createElement('input');
+
+            const config = PARAM_INPUT_CONFIG[param] || { type: 'text' };
+            input.type = config.type;
+
+            if (config.min !== undefined) input.min = config.min;
+            if (config.max !== undefined) input.max = config.max;
+            if (config.step !== undefined) input.step = config.step;
+            if (config.maxLength !== undefined) input.maxLength = config.maxLength;
+        }
+
+        input.name = param;
         // Alcuni parametri hanno un valore predefinito, altri restano vuoti.
         if (DEFAULT_ACTION_VALUES[param] !== undefined) {
             input.value = DEFAULT_ACTION_VALUES[param];
@@ -723,8 +772,8 @@ function addWaypointToSidebar(waypoint) {
 
     // I valori sono quelli ricevuti dal backend, non numeri fissi.
     waypointElement.innerHTML = `<b>${waypoint.waypoint_id}: (${latFixed}, ${lonFixed})</b> <b><a href="#" class="remove-waypoint">del</a></b>
-                                 <label>Speed: <input type="number" step="any" class="waypoint-speed" value="${waypoint.speed}"></label>
-                                 <label>Quote: <input type="number" step="any" class="waypoint-quote" value="${waypoint.quote}"></label>  `;
+                                 <label>Speed: <input type="number" step="any" min="0.1" class="waypoint-speed" value="${waypoint.speed}"></label>
+                                 <label>Quote: <input type="number" step="any" min="0.1" class="waypoint-quote" value="${waypoint.quote}"></label>  `;
     // Il link del cancella-waypoint richiama la relativa API.
     waypointElement.querySelector('.remove-waypoint').addEventListener('click', (event) => {
         event.preventDefault();  // Evita che il link '#' sposti la pagina.
@@ -788,8 +837,28 @@ function addWaypointToSidebar(waypoint) {
             label.style.flex = '1';
             label.style.fontStyle = 'italic';
 
-            const input = document.createElement('input');
-            input.type = 'text';
+            let input;
+
+            if (param === 'gimbalRotateMode') {
+               input = document.createElement('select');
+
+               const option = document.createElement('option');
+               option.value = 'absoluteAngle';
+               option.textContent = 'absoluteAngle';
+               input.appendChild(option);
+
+            } else {
+               input = document.createElement('input');
+
+               const config = PARAM_INPUT_CONFIG[param] || { type: 'text' };
+               input.type = config.type;
+
+               if (config.min !== undefined) input.min = config.min;
+               if (config.max !== undefined) input.max = config.max;
+               if (config.step !== undefined) input.step = config.step;
+               if (config.maxLength !== undefined) input.maxLength = config.maxLength;
+            }
+
             input.value = value;
             input.classList.add('parameter-input');
 
