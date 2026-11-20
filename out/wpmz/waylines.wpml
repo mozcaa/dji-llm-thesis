@@ -8,7 +8,7 @@
       <wpml:exitOnRCLost>executeLostAction</wpml:exitOnRCLost>
       <wpml:executeRCLostAction>hover</wpml:executeRCLostAction>
       <wpml:takeOffSecurityHeight>30</wpml:takeOffSecurityHeight>
-      <wpml:globalTransitionalSpeed>2.0</wpml:globalTransitionalSpeed>
+      <wpml:globalTransitionalSpeed>5.0</wpml:globalTransitionalSpeed>
       <wpml:droneInfo>
         <wpml:droneEnumValue>60</wpml:droneEnumValue>
       </wpml:droneInfo>
@@ -21,16 +21,16 @@
       <wpml:templateId>0</wpml:templateId>
       <wpml:executeHeightMode>relativeToStartPoint</wpml:executeHeightMode>
       <wpml:waylineId>0</wpml:waylineId>
-      <wpml:distance>421.16</wpml:distance>
-      <wpml:duration>210.8</wpml:duration>
-      <wpml:autoFlightSpeed>2.0</wpml:autoFlightSpeed>
+      <wpml:distance>1237.47</wpml:distance>
+      <wpml:duration>249.51</wpml:duration>
+      <wpml:autoFlightSpeed>5.0</wpml:autoFlightSpeed>
       <Placemark>
         <Point>
-          <coordinates>12.513674607150591,43.09719909507743</coordinates>
+          <coordinates>12.196978635843237,43.00764029798103</coordinates>
         </Point>
         <wpml:index>0</wpml:index>
-        <wpml:executeHeight>3.0</wpml:executeHeight>
-        <wpml:waypointSpeed>2.0</wpml:waypointSpeed>
+        <wpml:executeHeight>1.0</wpml:executeHeight>
+        <wpml:waypointSpeed>5.0</wpml:waypointSpeed>
         <wpml:waypointHeadingParam>
           <wpml:waypointHeadingMode>followWayline</wpml:waypointHeadingMode>
         </wpml:waypointHeadingParam>
@@ -58,11 +58,11 @@
       </Placemark>
       <Placemark>
         <Point>
-          <coordinates>12.514388821783228,43.09913236997909</coordinates>
+          <coordinates>12.191933281063427,43.0039858336319</coordinates>
         </Point>
         <wpml:index>1</wpml:index>
-        <wpml:executeHeight>12.0</wpml:executeHeight>
-        <wpml:waypointSpeed>2.0</wpml:waypointSpeed>
+        <wpml:executeHeight>10.0</wpml:executeHeight>
+        <wpml:waypointSpeed>5.0</wpml:waypointSpeed>
         <wpml:waypointHeadingParam>
           <wpml:waypointHeadingMode>followWayline</wpml:waypointHeadingMode>
         </wpml:waypointHeadingParam>
@@ -81,20 +81,22 @@
           </wpml:actionTrigger>
           <wpml:action>
             <wpml:actionId>0</wpml:actionId>
-            <wpml:actionActuatorFunc>rotateYaw</wpml:actionActuatorFunc>
+            <wpml:actionActuatorFunc>focus</wpml:actionActuatorFunc>
             <wpml:actionActuatorFuncParam>
-              <wpml:aircraftHeading>-38.0</wpml:aircraftHeading>
+              <wpml:payloadPositionIndex>0</wpml:payloadPositionIndex>
+              <wpml:focusX>0.5</wpml:focusX>
+              <wpml:focusY>0.5</wpml:focusY>
             </wpml:actionActuatorFuncParam>
           </wpml:action>
         </wpml:actionGroup>
       </Placemark>
       <Placemark>
         <Point>
-          <coordinates>12.511964820606721,43.09892692949563</coordinates>
+          <coordinates>12.20002186570943,43.0039858336319</coordinates>
         </Point>
         <wpml:index>2</wpml:index>
-        <wpml:executeHeight>2.0</wpml:executeHeight>
-        <wpml:waypointSpeed>1.0</wpml:waypointSpeed>
+        <wpml:executeHeight>10.0</wpml:executeHeight>
+        <wpml:waypointSpeed>5.0</wpml:waypointSpeed>
         <wpml:waypointHeadingParam>
           <wpml:waypointHeadingMode>followWayline</wpml:waypointHeadingMode>
         </wpml:waypointHeadingParam>
@@ -113,9 +115,9 @@
           </wpml:actionTrigger>
           <wpml:action>
             <wpml:actionId>0</wpml:actionId>
-            <wpml:actionActuatorFunc>hover</wpml:actionActuatorFunc>
+            <wpml:actionActuatorFunc>rotateYaw</wpml:actionActuatorFunc>
             <wpml:actionActuatorFuncParam>
-              <wpml:hoverTime>10.0</wpml:hoverTime>
+              <wpml:aircraftHeading>-29.0</wpml:aircraftHeading>
             </wpml:actionActuatorFuncParam>
           </wpml:action>
         </wpml:actionGroup>

@@ -45,8 +45,13 @@
 - Compilata l'app Android DJI tramite Android Studio e installata su un dispositivo Android per i test.
 - Effettuato con esito positivo un primo test di compatibilità KMZ: l'app ha importato e visualizzato correttamente il percorso di una missione creata con il planner, composta da 3 waypoint nell'area dell'aeroporto di Perugia.
 
+- 20/11/2026
+- Modificata la funzione create_kmz() per generare archivi con la struttura standard DJI. I file template.kml e waylines.wpml vengono ora inseriti nella cartella interna wpmz/ anziché nella radice dell'archivio.
+- Aggiornato il tempo missione calcolato in mission.py aggiungendo anche l'hoverTime al tempo totale.
+- Installato Ollama, scaricato e avviato il modello locale qwen3:4b-instruct.
+
 ### Next steps
 
-- Verificare la compatibilità dei KMZ generati con l'app Android DJI e il simulatore.
-- Valutare la possibilità di visualizzare nomi delle città e confini degli Stati sulla mappa.
-- Iniziare l'integrazione di un LLM locale per generare missioni a partire da istruzioni in linguaggio naturale.
+- Creare test_llm.py per comunicare con Ollama attraverso la sua API locale.
+- Verificare la generazione di JSON a partire da semplici istruzioni in linguaggio naturale.
+- Provare a far generare una missione.

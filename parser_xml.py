@@ -2,6 +2,7 @@
 import os
 import shutil
 from lxml import etree
+import zipfile
 
 from mission import Mission, print_mission, create_empty_mission, Waypoint, ACTIONS, Action
 
@@ -19,14 +20,27 @@ def write_pretty_xml(element, file_path):
         file.write(pretty_xml)
 
 
-# Comprime i file della missione in uno ZIP, lo rinomina in KMZ e lo sposta in out/.
-def create_kmz(mission_name, folder_to_zip):
-    output_folder = "out"
-    kmz_filename = f"{mission_name}.kmz"
 
-    shutil.make_archive(mission_name, 'zip', folder_to_zip)       # Comprime il contenuto della cartella.
-    shutil.move(f"{mission_name}.zip", kmz_filename)              # Cambia l'estensione da ZIP a KMZ.
-    shutil.move(kmz_filename, os.path.join(output_folder, kmz_filename))  # Sposta il file nella cartella out.
+# Comprime i documenti XML nella struttura standard DJI.
+def create_kmz(mission_name, folder_to_zip):
+
+    output_folder = "out"
+    os.makedirs(output_folder, exist_ok=True)
+
+    # Percorso del KMZ finale sul computer (es. out/mission.kmz).
+    kmz_path = os.path.join(output_folder, f"{mission_name}.kmz")
+
+    # Crea l'archivio KMZ utilizzando la compressione ZIP.
+    with zipfile.ZipFile(kmz_path, 'w', zipfile.ZIP_DEFLATED) as archive:
+
+        # Inserisce nell'archivio i due documenti della missione.
+        for filename in ("template.kml", "waylines.wpml"):
+
+            # Percorso del file originale sul computer.
+            file_path = os.path.join(folder_to_zip, filename)
+
+            # Inserisce il file nello ZIP sotto la cartella interna wpmz/.
+            archive.write(file_path, arcname=f"wpmz/{filename}")
 
 
 # Converte un oggetto Mission nei documenti XML richiesti da DJI e genera il KMZ.
@@ -147,7 +161,8 @@ def kmz_to_mission(mission_name):
     kml_path = os.path.join(out_dir, f"{mission_name}.kmz")  # Percorso del KMZ da importare.
     shutil.unpack_archive(kml_path, temp_dir, "zip")         # Estrae il contenuto dello ZIP/KMZ.
 
-    wpml_path = os.path.join(temp_dir, "waylines.wpml")      # File contenente la traiettoria.
+    # Percorso del documento WPML dopo l'estrazione del KMZ.
+    wpml_path = os.path.join(temp_dir, "wpmz", "waylines.wpml") # temp_dir contiene i file estratti; wpmz è la cartella interna dell'archivio.
 
     if not os.path.exists(wpml_path):
         raise FileNotFoundError(f"{wpml_path} not found in the KMZ archive.")

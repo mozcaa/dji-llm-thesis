@@ -131,7 +131,13 @@ class Mission:
 
             total += distance / speed
 
+        for waypoint in self.waypoints:
+           for action in waypoint.actions:
+                if action.action_type == "hover":
+                   total += float(action.parameters["hoverTime"])
+
         return round(total, 2)
+    
 
     # Inserisce un waypoint nella posizione indicata.
     def add_waypoint_at(self, waypoint: Waypoint, index):
