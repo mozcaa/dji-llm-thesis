@@ -50,8 +50,16 @@
 - Aggiornato il tempo missione calcolato in mission.py aggiungendo anche l'hoverTime al tempo totale.
 - Installato Ollama, scaricato e avviato il modello locale qwen3:4b-instruct.
 
+- 22/11/2026
+- Creato proveLLM.py, che comunica con Ollama tramite richieste HTTP POST utilizzando la libreria requests definendo un JSON Schema per le missioni DJI da mettere nel campo format della richiesta di generazione della missione.
+- Integrata la conversione del JSON validato in oggetti Python Mission, Waypoint e Action tramite mission_from_dict().
+- Eseguiti diversi test di generazione, individuando anche errori nell'interpretazione dei prompt, come coordinate ripetute e tempi di attesa non corrispondenti alle istruzioni.
+- Generata correttamente una missione con tre waypoint, coordinate specifiche, quota e velocità uniformi e tre azioni hover rispettivamente di 5, 10 e 15 secondi.
+- Importato il KMZ nel planner Flask, verificando il corretto riconoscimento dei waypoint e delle azioni hover con i rispettivi parametri.
+
 ### Next steps
 
-- Creare test_llm.py per comunicare con Ollama attraverso la sua API locale.
-- Verificare la generazione di JSON a partire da semplici istruzioni in linguaggio naturale.
-- Provare a far generare una missione.
+- Testare la generazione di missioni contenenti tutte e sei le azioni supportate, verificando la correttezza dei parametri e la loro conservazione durante esportazione e reimportazione KMZ.
+- Integrare Ollama nel backend Flask e aggiungere al frontend un campo per generare missioni direttamente da richieste in linguaggio naturale.
+- Implementare la seconda pipeline basata sulla generazione diretta di XML/WPML tramite LLM, con successiva validazione e creazione del KMZ.
+- Integrare anche questa pipeline.
