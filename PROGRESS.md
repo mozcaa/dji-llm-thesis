@@ -57,6 +57,12 @@
 - Generata correttamente una missione con tre waypoint, coordinate specifiche, quota e velocità uniformi e tre azioni hover rispettivamente di 5, 10 e 15 secondi.
 - Importato il KMZ nel planner Flask, verificando il corretto riconoscimento dei waypoint e delle azioni hover con i rispettivi parametri.
 
+- 23/11/2026
+- Ricerca su come si crea uno schema XML
+
+- 25/11/2026
+- Creazione dello schema XML, per il momento, tutto il file waylines.wpml dovrebbe essere creato dall' LLM, create funzioni python per prendere l'XML creato dall' LLM e aggiustare tempo, durata e i vari indici per poi dopo creare il file kmz senza definire un oggetto missione ma basandosi solo sull' XML creato da OLLAMA. Al momento non è stato testato, necessità di correggere eventuali errori/refusi.
+
 ### Next steps
 
 - Testare la generazione di missioni contenenti tutte e sei le azioni supportate, verificando la correttezza dei parametri e la loro conservazione durante esportazione e reimportazione KMZ.
