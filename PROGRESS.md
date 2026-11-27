@@ -63,9 +63,16 @@
 - 25/11/2026
 - Creazione dello schema XML, per il momento, tutto il file waylines.wpml dovrebbe essere creato dall' LLM, create funzioni python per prendere l'XML creato dall' LLM e aggiustare tempo, durata e i vari indici per poi dopo creare il file kmz senza definire un oggetto missione ma basandosi solo sull' XML creato da OLLAMA. Al momento non è stato testato, necessità di correggere eventuali errori/refusi.
 
+- 27/11/2026
+- Testate entrambe le pipeline JSON e XML utilizzando un prompt complesso contenente 8 waypoint, quote e velocità variabili e tutte e sei le tipologie di azione supportate.
+- Generati correttamente i file KMZ con entrambe le pipeline e verificata la loro importazione nel planner web.
+- Confrontati i risultati delle due pipeline, individuando errori nell'interpretazione delle relazioni matematiche tra quote e velocità e nell'associazione delle azioni ai waypoint.
+- Modificato il prompt XML introducendo un esempio di Placemark contenente più azioni, per migliorare la comprensione della struttura richiesta,, non ha funzionato ma anzi genera peggio, mentre la pipeline json è riuscita a generare una missione molto complessa quasi perfettamente.
+- Individuata la necessità di migliorare ulteriormente le istruzioni della pipeline XML.
+
 ### Next steps
 
-- Testare la generazione di missioni contenenti tutte e sei le azioni supportate, verificando la correttezza dei parametri e la loro conservazione durante esportazione e reimportazione KMZ.
+- Testare la generazione di missioni 
 - Integrare Ollama nel backend Flask e aggiungere al frontend un campo per generare missioni direttamente da richieste in linguaggio naturale.
 - Implementare la seconda pipeline basata sulla generazione diretta di XML/WPML tramite LLM, con successiva validazione e creazione del KMZ.
 - Integrare anche questa pipeline.
